@@ -1,4 +1,4 @@
-name: Deploy Container Inspection OCR
+name: Deploy Tex Yard Inspection
 
 on:
   push:
@@ -21,16 +21,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Pages
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Build self-hosted OCR site
+      - name: Build PaddleOCR site
         run: bash scripts/build-site.sh
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./_site
+          path: ./dist
 
   deploy:
     environment:
