@@ -1,3 +1,7 @@
+# Container Inspection OCR — Diagnostic Build
+
+本目录为可诊断版本。页面版本：`2026.07.28-diagnostic-1`。
+
 # 集装箱箱号识别与检验状态记录｜GitHub Pages 完整部署包
 
 这个包用于把网页部署到 GitHub Pages。GitHub Actions 会在部署阶段自动下载并放入站内：
