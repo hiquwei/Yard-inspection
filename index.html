@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123f68">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>集装箱箱号识别与检验状态记录</title>
+<style>
+:root{
+  --navy:#123f68;--blue:#1f75b5;--bg:#eef3f7;--card:#fff;--line:#d6e0e8;
+  --text:#17212b;--muted:#667788;--ok:#138a4b;--ok-bg:#e8f7ef;
+  --repair:#1775c5;--repair-bg:#e8f3fd;--hold:#d97706;--hold-bg:#fff3df;
+  --reject:#cf2f2f;--reject-bg:#ffebeb;--blank:#f6f8fa;--scan:#39e89f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;background:var(--bg);color:var(--text)}
+body.camera-on{overflow:hidden}.app{max-width:1180px;margin:auto;padding:12px 10px 44px}.hero,.card{border-radius:16px}.hero{padding:18px;color:#fff;background:linear-gradient(135deg,var(--navy),var(--blue));box-shadow:0 8px 28px rgba(18,63,104,.16)}
+h1{font-size:clamp(23px,5vw,34px);margin:0 0 8px}.hero p{margin:0;line-height:1.65}.sample{display:inline-block;margin-top:12px;padding:8px 12px;border:1px solid rgba(255,255,255,.35);border-radius:10px;background:rgba(255,255,255,.12);font:800 20px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace}.card{margin-top:14px;padding:15px;background:var(--card);border:1px solid var(--line);box-shadow:0 8px 24px rgba(18,63,104,.07)}
+.card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.card-title h2{font-size:20px;margin:0}.sub{font-size:13px;color:var(--muted);line-height:1.6}.grid{display:grid;gap:11px}.setup-grid{grid-template-columns:1fr 1fr 1fr auto}.field label{display:block;font-size:13px;font-weight:750;color:#475467;margin-bottom:6px}.field input,.field textarea,.field select{width:100%;min-height:46px;padding:10px 11px;border:1px solid #aebdca;border-radius:10px;background:#fff;color:var(--text);font:700 16px/1.2 inherit}.field input.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.7px;text-transform:uppercase}.field textarea{min-height:76px;resize:vertical;font-weight:500}.btn-row{display:flex;flex-wrap:wrap;gap:9px;align-items:end}button,.file-btn{min-height:46px;border:0;border-radius:11px;padding:10px 13px;display:inline-flex;align-items:center;justify-content:center;text-align:center;font:750 14px/1.25 inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}.primary{color:#fff;background:var(--blue)}.secondary{color:var(--navy);background:#e7f1f8}.plain{color:#344054;background:#edf1f4}.danger{color:#b42318;background:#fff0ee}.dark{color:#fff;background:#243443}.file-btn{position:relative;overflow:hidden}.file-btn input{position:absolute;inset:0;width:100%;height:100%;opacity:.001;cursor:pointer;font-size:100px}.runtime{margin-top:12px;padding:11px 12px;border-radius:11px;font-size:14px;line-height:1.55}.runtime.ok{color:#075f34;background:#eaf8f0;border:1px solid #a7dec0}.runtime.warn{color:#744300;background:#fff4df;border:1px solid #efd197}.runtime.bad{color:#8f1c13;background:#fff0ee;border:1px solid #efb4ae}.stats{display:grid;grid-template-columns:repeat(7,minmax(90px,1fr));gap:9px}.stat{padding:11px 9px;border-radius:12px;border:1px solid var(--line);background:#fff;text-align:center}.stat strong{display:block;font-size:22px}.stat span{font-size:12px;color:var(--muted)}.stat.ok{background:var(--ok-bg);border-color:#b4e0c8}.stat.repair{background:var(--repair-bg);border-color:#b5d6f4}.stat.hold{background:var(--hold-bg);border-color:#f0c98f}.stat.reject{background:var(--reject-bg);border-color:#f2b7b7}.toolbar{display:flex;flex-wrap:wrap;gap:9px}.orientation{display:inline-flex;padding:3px;border-radius:11px;background:#edf2f6}.orientation button{min-height:40px;background:transparent;color:#44505d}.orientation button.active{color:#fff;background:var(--navy)}.manual-row{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:9px;margin-top:11px}.manual-row input{min-height:46px;padding:10px;border:1px solid #aebdca;border-radius:10px;text-transform:uppercase;font:800 18px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace}.progress-wrap{margin-top:11px;display:none}.progress-wrap.show{display:block}progress{width:100%;height:13px;accent-color:var(--blue)}.ocr-line{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:13px;color:var(--muted)}.filter-grid{display:grid;grid-template-columns:170px 170px 1fr auto;gap:10px;align-items:end}.status-filter{display:flex;flex-wrap:wrap;gap:7px}.check-pill{position:relative}.check-pill input{position:absolute;opacity:0;pointer-events:none}.check-pill label{display:inline-flex;align-items:center;min-height:39px;padding:8px 11px;border:1px solid var(--line);border-radius:99px;background:#fff;font-size:13px;font-weight:750;cursor:pointer}.check-pill input:checked+label{color:#fff;background:var(--navy);border-color:var(--navy)}.check-pill.ok input:checked+label{background:var(--ok);border-color:var(--ok)}.check-pill.repair input:checked+label{background:var(--repair);border-color:var(--repair)}.check-pill.hold input:checked+label{background:var(--hold);border-color:var(--hold)}.check-pill.reject input:checked+label{background:var(--reject);border-color:var(--reject)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:60vh}table{width:100%;min-width:760px;border-collapse:collapse;background:#fff}th,td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{position:sticky;top:0;z-index:1;background:#edf2f6;color:#344054;font-size:13px}tr:last-child td{border-bottom:0}.center{text-align:center}.container-link{border:0;background:none;padding:0;min-height:0;border-radius:0;color:var(--navy);font:800 16px/1.25 ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:underline;text-underline-offset:3px}.status-badge{display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:5px 9px;border-radius:99px;font-size:12px;font-weight:850}.status-badge.OK{color:#fff;background:var(--ok)}.status-badge.Repair{color:#fff;background:var(--repair)}.status-badge.Hold{color:#fff;background:var(--hold)}.status-badge.Reject{color:#fff;background:var(--reject)}.row-OK{background:var(--ok-bg)}.row-Repair{background:var(--repair-bg)}.row-Hold{background:var(--hold-bg)}.row-Reject{background:var(--reject-bg)}.empty{padding:28px;text-align:center;color:var(--muted)}details.master{margin-top:14px;border:1px solid var(--line);border-radius:13px;background:#fff;overflow:hidden}details.master>summary{list-style:none;cursor:pointer;padding:14px 15px;font-weight:800;background:#f7f9fb;display:flex;align-items:center;justify-content:space-between;gap:10px}details.master>summary::-webkit-details-marker{display:none}.summary-left::before{content:"＋";display:inline-block;width:24px;font-size:20px;color:var(--blue)}details[open] .summary-left::before{content:"－"}.master-body{padding:12px}.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted)}.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.camera{display:none;position:fixed;inset:0;z-index:1000;background:#000}.camera.open{display:block}.camera video{width:100%;height:100%;object-fit:cover;background:#000}.cam-top{position:absolute;left:0;right:0;top:0;z-index:4;display:flex;align-items:center;justify-content:space-between;padding:max(14px,env(safe-area-inset-top)) 14px;color:#fff}.round{width:46px;height:46px;min-height:46px;padding:0;border-radius:50%;font-size:23px;color:#fff;background:rgba(0,0,0,.48)}.cam-mode{display:flex;padding:3px;border-radius:12px;background:rgba(0,0,0,.48)}.cam-mode button{min-height:38px;color:#fff;background:transparent}.cam-mode button.active{background:rgba(255,255,255,.25)}.shade{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}.scan{position:relative;border:3px solid var(--scan);border-radius:12px;box-shadow:0 0 0 120vmax rgba(0,0,0,.58);transition:width .2s,height .2s}.scan.horizontal{width:min(92vw,860px);aspect-ratio:5.2/1}.scan.vertical{height:min(76vh,720px);aspect-ratio:1/5.2}.scan b{position:absolute;left:50%;top:-42px;transform:translateX(-50%);white-space:nowrap;padding:7px 11px;border-radius:99px;background:var(--scan);color:#063326;font-size:13px}.scan em{position:absolute;left:50%;bottom:-38px;transform:translateX(-50%);white-space:nowrap;color:#fff;font:800 16px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;font-style:normal;text-shadow:0 1px 4px #000}.cam-bottom{position:absolute;left:0;right:0;bottom:0;z-index:4;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:18px 18px max(24px,env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.76));color:#fff}.shutter{width:78px;height:78px;min-height:78px;padding:0;border:5px solid #fff;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(0,0,0,.35)}.cam-help{font-size:12px;line-height:1.4}.switch{justify-self:end}.processing{display:none;position:absolute;inset:0;z-index:7;align-items:center;justify-content:center;background:rgba(0,0,0,.72);color:#fff;text-align:center;padding:24px}.processing.show{display:flex}.processing-box{width:min(88vw,480px);padding:20px;border-radius:15px;background:rgba(20,31,40,.95)}.processing-box strong{display:block;font-size:19px;margin-bottom:10px}.processing-box progress{accent-color:var(--scan)}
+.panel{display:none;position:fixed;inset:0;z-index:1600;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);padding:12px}.panel.show{display:flex}.panel-card{width:min(100%,620px);max-height:88vh;overflow:auto;padding:17px;border-radius:17px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.28)}.panel-card h3{margin:0 0 7px}.recognized-no{text-align:center;margin:12px 0;padding:12px;border-radius:11px;background:#edf4fa;color:var(--navy);font:900 23px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace}.status-buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.status-buttons button{color:#fff}.btn-ok{background:var(--ok)}.btn-repair{background:var(--repair)}.btn-hold{background:var(--hold)}.btn-reject{background:var(--reject)}.candidate-list{display:grid;gap:8px;margin:12px 0}.candidate{justify-content:flex-start;background:#edf4fa;color:var(--navy);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.modal{display:none;position:fixed;inset:0;z-index:1800;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:13px}.modal.show{display:flex}.modal-card{width:min(100%,560px);max-height:92vh;overflow:auto;padding:17px;border-radius:16px;background:#fff}.radio-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:11px 0}.radio-status{position:relative}.radio-status input{position:absolute;opacity:0}.radio-status label{display:flex;min-height:44px;align-items:center;justify-content:center;border:2px solid var(--line);border-radius:10px;font-weight:850;cursor:pointer}.radio-status input:checked+label{border-color:var(--navy);box-shadow:0 0 0 2px rgba(18,63,104,.12)}.toast{display:none;position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom));z-index:2500;transform:translateX(-50%);width:min(92vw,560px);padding:12px 14px;border-radius:10px;color:#fff;background:rgba(20,27,35,.95);text-align:center;line-height:1.5}.toast.show{display:block}
+@media(max-width:880px){.setup-grid{grid-template-columns:1fr 1fr}.setup-grid .btn-row{grid-column:1/-1}.stats{grid-template-columns:repeat(4,1fr)}.filter-grid{grid-template-columns:1fr 1fr}.filter-grid .status-filter,.filter-grid .btn-row{grid-column:1/-1}.manual-row{grid-template-columns:1fr}.app{padding:9px 9px 30px}.scan.horizontal{width:92vw}}
+@media(max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}.setup-grid{grid-template-columns:1fr}.filter-grid{grid-template-columns:1fr}.status-buttons,.radio-grid{grid-template-columns:1fr 1fr}.toolbar>*{flex:1 1 calc(50% - 9px)}.orientation{flex:1 1 100%}.orientation button{flex:1}.cam-help{visibility:hidden}}
+@media print{.hero,.setup-card,.camera-card,.filter-card,.runtime,.panel,.modal,.toast,.btn-row,.toolbar{display:none!important}.app{max-width:none;padding:0}.card{box-shadow:none;border:0}.table-wrap{max-height:none;overflow:visible}details.master{display:block}details.master>summary{display:none}.master-body{display:block!important}table{min-width:0}}
+</style>
+<script>
+window.__bootError='';
+window.onerror=function(message,source,line){window.__bootError=String(message||'未知脚本错误')+'（第 '+line+' 行）';var e=document.getElementById('runtimeStatus');if(e){e.className='runtime bad';e.innerHTML='<strong>网页脚本运行失败</strong><br>'+window.__bootError;}return false;};
+window.addEventListener('unhandledrejection',function(ev){var msg=ev&&ev.reason&&ev.reason.message?ev.reason.message:String(ev.reason||'异步处理失败');var e=document.getElementById('runtimeStatus');if(e){e.className='runtime bad';e.innerHTML='<strong>处理失败</strong><br>'+escapeHTML(msg);}});
+function escapeHTML(v){return String(v==null?'':v).replace(/[&<>'"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]});}
+</script>
+</head>
+<body>
+<main class="app">
+  <section class="hero">
+    <h1>集装箱箱号识别与检验状态记录</h1>
+    <p>先生成箱号范围，再连续拍摄识别。照片仅用于当次识别；记录只保存箱号、状态、日期和备注。OCR 资源由当前站点自行托管。</p>
+    <div class="sample">TEXU&nbsp;123456&nbsp;7</div>
+  </section>
+
+  <div id="runtimeStatus" class="runtime warn"><strong>正在启动网页脚本……</strong></div>
+
+  <section class="card setup-card">
+    <div class="card-title"><h2>1. 生成箱号清单</h2><span class="sub">检查号自动计算，不需要输入</span></div>
+    <div class="grid setup-grid">
+      <div class="field"><label for="prefixInput">字母部分（4位）</label><input id="prefixInput" class="mono" maxlength="4" placeholder="TEXU" autocomplete="off"></div>
+      <div class="field"><label for="startInput">开始六位号</label><input id="startInput" class="mono" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off"></div>
+      <div class="field"><label for="endInput">结束六位号</label><input id="endInput" class="mono" inputmode="numeric" maxlength="6" placeholder="123500" autocomplete="off"></div>
+      <div class="btn-row">
+        <button type="button" class="primary" id="generateBtn">生成清单</button>
+        <button type="button" class="danger" id="clearAllBtn">清空全部</button>
+      </div>
+    </div>
+    <p class="sub" style="margin-bottom:0">重新生成时，会保留仍在新范围内的箱号状态；超出新范围的记录将不再保留。</p>
+  </section>
+
+  <section class="card">
+    <div class="stats">
+      <div class="stat"><strong id="statTotal">0</strong><span>总箱数</span></div>
+      <div class="stat"><strong id="statDone">0</strong><span>已检验</span></div>
+      <div class="stat"><strong id="statBlank">0</strong><span>未检验</span></div>
+      <div class="stat ok"><strong id="statOK">0</strong><span>OK</span></div>
+      <div class="stat repair"><strong id="statRepair">0</strong><span>Repair</span></div>
+      <div class="stat hold"><strong id="statHold">0</strong><span>Hold</span></div>
+      <div class="stat reject"><strong id="statReject">0</strong><span>Reject</span></div>
+    </div>
+  </section>
+
+  <section class="card camera-card">
+    <div class="card-title"><h2>2. 连续拍照识别</h2><span class="sub">识别后选择状态，再继续下一箱</span></div>
+    <div class="toolbar">
+      <button type="button" class="primary" id="openCameraBtn">▣ 打开连续识别相机</button>
+      <button type="button" class="secondary" id="prepareOcrBtn">⚙️ 预加载本地OCR</button>
+      <label class="file-btn secondary">📷 手机相机<input id="cameraInput" type="file" accept="image/*" capture="environment"></label>
+      <label class="file-btn secondary">🖼️ 从相册选择<input id="galleryInput" type="file" accept="image/*"></label>
+      <div class="orientation" aria-label="识别框方向">
+        <button type="button" id="horizontalBtn" class="active">横向框</button>
+        <button type="button" id="verticalBtn">竖向框</button>
+      </div>
+    </div>
+    <div class="manual-row">
+      <input id="manualInput" placeholder="手动输入箱号，例如 TEXU 123456 7" autocomplete="off">
+      <button type="button" class="plain" id="manualBtn">查找并登记</button>
+    </div>
+    <div id="progressWrap" class="progress-wrap"><progress id="ocrProgress" max="1" value="0"></progress><div class="ocr-line"><span id="ocrStatus">准备识别</span><span id="ocrPercent">0%</span></div></div>
+    <p class="sub" style="margin-bottom:0">实时识别框相机需要 HTTPS 和相机权限。选择系统照片后，网页会清除文件引用和预览，但无法删除 iPhone 相册中原有照片。</p>
+  </section>
+
+  <section class="card filter-card">
+    <div class="card-title"><h2>3. 检验记录筛选</h2><span id="filteredCount" class="sub">0 条记录</span></div>
+    <div class="filter-grid">
+      <div class="field"><label for="dateFrom">开始日期</label><input id="dateFrom" type="date"></div>
+      <div class="field"><label for="dateTo">结束日期</label><input id="dateTo" type="date"></div>
+      <div class="field"><label>状态（可单选、复选或全选）</label>
+        <div class="status-filter">
+          <span class="check-pill"><input id="filterAll" type="checkbox" checked><label for="filterAll">All</label></span>
+          <span class="check-pill ok"><input id="filterOK" type="checkbox" checked value="OK"><label for="filterOK">OK</label></span>
+          <span class="check-pill repair"><input id="filterRepair" type="checkbox" checked value="Repair"><label for="filterRepair">Repair</label></span>
+          <span class="check-pill hold"><input id="filterHold" type="checkbox" checked value="Hold"><label for="filterHold">Hold</label></span>
+          <span class="check-pill reject"><input id="filterReject" type="checkbox" checked value="Reject"><label for="filterReject">Reject</label></span>
+        </div>
+      </div>
+      <div class="btn-row"><button type="button" class="secondary" id="todayBtn">今天</button><button type="button" class="plain" id="clearFilterBtn">清除筛选</button><button type="button" class="dark" id="exportBtn">导出 CSV</button></div>
+    </div>
+    <div class="table-wrap" style="margin-top:12px;max-height:52vh">
+      <table>
+        <thead><tr><th class="center">No.</th><th>Container No.</th><th>Status</th><th>Inspection Date</th><th>Note</th><th>Updated Time</th></tr></thead>
+        <tbody id="recordBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details id="masterDetails" class="master">
+    <summary><span class="summary-left">预生成箱号清单</span><span id="masterSummary" class="sub">共 0 个｜已检验 0 个｜未检验 0 个</span></summary>
+    <div class="master-body">
+      <div class="legend" style="margin-bottom:10px">
+        <span><i style="background:#fff;border:1px solid #cad5df"></i>状态留空＝尚未检验</span>
+        <span><i style="background:var(--ok)"></i>OK</span><span><i style="background:var(--repair)"></i>Repair</span><span><i style="background:var(--hold)"></i>Hold</span><span><i style="background:var(--reject)"></i>Reject</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="center">No.</th><th>Container No.</th><th>Status</th><th>Inspection Date</th><th>Note</th></tr></thead>
+          <tbody id="masterBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+</main>
+
+<div id="cameraLayer" class="camera" aria-hidden="true">
+  <video id="cameraVideo" playsinline muted></video>
+  <div class="cam-top">
+    <button type="button" class="round" id="closeCameraBtn" aria-label="关闭">×</button>
+    <div class="cam-mode"><button type="button" id="camHorizontalBtn" class="active">横向</button><button type="button" id="camVerticalBtn">竖向</button></div>
+    <button type="button" class="round" id="switchCameraBtn" aria-label="切换相机">↺</button>
+  </div>
+  <div class="shade"><div id="scanFrame" class="scan horizontal"><b>将完整箱号放入框内</b><em>TEXU 123456 7</em></div></div>
+  <div class="cam-bottom"><div class="cam-help">拍摄后相机保持打开<br>可连续识别</div><button type="button" id="shutterBtn" class="shutter" aria-label="拍摄"></button><button type="button" id="finishCameraBtn" class="round switch" aria-label="结束">✓</button></div>
+  <div id="processingLayer" class="processing"><div class="processing-box"><strong id="processingTitle">正在识别……</strong><progress id="cameraProgress" max="1" value="0"></progress><div id="cameraProgressText" style="margin-top:8px">0%</div></div></div>
+</div>
+
+<div id="recognitionPanel" class="panel">
+  <div class="panel-card">
+    <h3 id="recognitionTitle">识别结果</h3>
+    <div id="recognizedNumber" class="recognized-no">—</div>
+    <div id="recognitionMessage" class="sub"></div>
+    <div id="candidateList" class="candidate-list"></div>
+    <div id="recognitionFields">
+      <div class="field"><label for="recognitionDate">Inspection Date</label><input id="recognitionDate" type="date"></div>
+      <div class="field" style="margin-top:9px"><label for="recognitionNote">Note（可选）</label><textarea id="recognitionNote" placeholder="可记录维修问题、扣箱原因或拒收原因"></textarea></div>
+      <div class="status-buttons"><button type="button" class="btn-ok" data-status="OK">OK</button><button type="button" class="btn-repair" data-status="Repair">Repair</button><button type="button" class="btn-hold" data-status="Hold">Hold</button><button type="button" class="btn-reject" data-status="Reject">Reject</button></div>
+    </div>
+    <div class="btn-row"><button type="button" class="plain" id="retryBtn">重新拍摄／取消</button></div>
+  </div>
+</div>
+
+<div id="editModal" class="modal">
+  <div class="modal-card">
+    <div class="card-title"><h2>修改箱号状态</h2><button type="button" class="plain" id="closeEditBtn">关闭</button></div>
+    <div id="editNumber" class="recognized-no">—</div>
+    <div class="radio-grid">
+      <span class="radio-status"><input type="radio" name="editStatus" id="editBlank" value=""><label for="editBlank">留空</label></span>
+      <span class="radio-status"><input type="radio" name="editStatus" id="editOK" value="OK"><label for="editOK" style="color:var(--ok)">OK</label></span>
+      <span class="radio-status"><input type="radio" name="editStatus" id="editRepair" value="Repair"><label for="editRepair" style="color:var(--repair)">Repair</label></span>
+      <span class="radio-status"><input type="radio" name="editStatus" id="editHold" value="Hold"><label for="editHold" style="color:var(--hold)">Hold</label></span>
+      <span class="radio-status"><input type="radio" name="editStatus" id="editReject" value="Reject"><label for="editReject" style="color:var(--reject)">Reject</label></span>
+    </div>
+    <div class="field"><label for="editDate">Inspection Date</label><input id="editDate" type="date"></div>
+    <div class="field" style="margin-top:9px"><label for="editNote">Note</label><textarea id="editNote"></textarea></div>
+    <div class="btn-row" style="margin-top:12px"><button type="button" class="primary" id="saveEditBtn">保存修改</button><button type="button" class="danger" id="clearStatusBtn">清空状态</button></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var STORAGE_KEY='containerInspectionOCR_v6';
+var OCR_SCRIPT='./ocr/tesseract.min.js';
+var OCR_WORKER='./ocr/worker.min.js';
+var OCR_CORE='./ocr/core';
+var OCR_LANG='./ocr/lang/';
+var LETTER_VALUE={A:10,B:12,C:13,D:14,E:15,F:16,G:17,H:18,I:19,J:20,K:21,L:23,M:24,N:25,O:26,P:27,Q:28,R:29,S:30,T:31,U:32,V:34,W:35,X:36,Y:37,Z:38};
+var L2D={O:'0',Q:'0',D:'0',I:'1',L:'1',Z:'2',S:'5',G:'6',B:'8'};
+var D2L={'0':'O','1':'I','2':'Z','5':'S','6':'G','8':'B'};
+var state={config:null,items:[],orientation:'horizontal',stream:null,facing:'environment',busy:false,currentRaw:'',editingRaw:'',cameraWasOpen:false,ocrWorker:null,ocrInitPromise:null,ocrLabel:'准备OCR'};
+var el=function(id){return document.getElementById(id)};
+var today=function(){var d=new Date(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return d.getFullYear()+'-'+m+'-'+day};
+var timeNow=function(){var d=new Date(),pad=function(v){return String(v).padStart(2,'0')};return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())};
+var displayDate=function(v){return String(v||'').replace(/-/g,'/')};
+function toast(msg){var t=el('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(function(){t.classList.remove('show')},2600)}
+function setRuntime(msg,type){var r=el('runtimeStatus');r.className='runtime '+(type||'ok');r.innerHTML=msg}
+function checkDigit(first10){var sum=0;for(var i=0;i<10;i++){var c=first10.charAt(i),v=i<4?LETTER_VALUE[c]:Number(c);if(v===undefined||Number.isNaN(v))return null;sum+=v*Math.pow(2,i)}var rem=sum%11;return rem===10?0:rem}
+function cleanRaw(value){return String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
+function formatRaw(raw){raw=cleanRaw(raw);if(raw.length<=4)return raw;if(raw.length<=10)return raw.slice(0,4)+' '+raw.slice(4);return raw.slice(0,4)+' '+raw.slice(4,10)+' '+raw.slice(10,11)}
+function validRaw(raw){raw=cleanRaw(raw);return /^[A-Z]{4}\d{7}$/.test(raw)&&checkDigit(raw.slice(0,10))===Number(raw.charAt(10))}
+function itemMap(){var m=new Map();state.items.forEach(function(it){m.set(it.raw,it)});return m}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({config:state.config,items:state.items,orientation:state.orientation}))}catch(e){setRuntime('<strong>保存失败</strong><br>浏览器本地存储不可用：'+escapeHTML(e.message),'bad')}}
+function load(){try{var data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(data){state.config=data.config||null;state.items=Array.isArray(data.items)?data.items:[];state.orientation=data.orientation==='vertical'?'vertical':'horizontal'}}catch(e){state.config=null;state.items=[]}}
+function normalizeSetupInputs(){el('prefixInput').value=el('prefixInput').value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);el('startInput').value=el('startInput').value.replace(/\D/g,'').slice(0,6);el('endInput').value=el('endInput').value.replace(/\D/g,'').slice(0,6)}
+function generateList(){normalizeSetupInputs();var prefix=el('prefixInput').value,startStr=el('startInput').value,endStr=el('endInput').value;if(!/^[A-Z]{4}$/.test(prefix)){toast('请输入4位字母');el('prefixInput').focus();return}if(!/^\d{6}$/.test(startStr)||!/^\d{6}$/.test(endStr)){toast('开始号和结束号必须各为6位数字');return}var start=Number(startStr),end=Number(endStr);if(end<start){toast('结束号不能小于开始号');return}var count=end-start+1;if(count>20000){toast('一次最多生成20,000个箱号');return}var old=itemMap(),items=[];for(var n=start;n<=end;n++){var serial=String(n).padStart(6,'0'),first10=prefix+serial,raw=first10+checkDigit(first10),prev=old.get(raw);items.push(prev?Object.assign({},prev,{serial:serial}):{raw:raw,serial:serial,status:'',date:'',note:'',updatedAt:'',source:''})}state.config={prefix:prefix,start:startStr,end:endStr};state.items=items;save();renderAll();toast('已生成 '+count+' 个箱号');setRuntime('<strong>箱号清单已生成</strong><br>'+escapeHTML(formatRaw(items[0].raw))+' ～ '+escapeHTML(formatRaw(items[items.length-1].raw)),'ok')}
+function clearAll(){if(!state.items.length){toast('当前没有数据');return}if(!confirm('确定清空箱号清单、状态、日期和备注吗？此操作无法撤销。'))return;state.config=null;state.items=[];save();el('prefixInput').value='';el('startInput').value='';el('endInput').value='';renderAll();toast('全部数据已清空')}
+function statusBadge(status){return status?'<span class="status-badge '+status+'">'+status+'</span>':''}
+function renderStats(){var c={OK:0,Repair:0,Hold:0,Reject:0};state.items.forEach(function(i){if(c[i.status]!==undefined)c[i.status]++});var done=c.OK+c.Repair+c.Hold+c.Reject;el('statTotal').textContent=state.items.length;el('statDone').textContent=done;el('statBlank').textContent=state.items.length-done;el('statOK').textContent=c.OK;el('statRepair').textContent=c.Repair;el('statHold').textContent=c.Hold;el('statReject').textContent=c.Reject;el('masterSummary').textContent='共 '+state.items.length+' 个｜已检验 '+done+' 个｜未检验 '+(state.items.length-done)+' 个'}
+function renderMaster(){var b=el('masterBody');if(!state.items.length){b.innerHTML='<tr><td colspan="5" class="empty">尚未生成箱号清单</td></tr>';return}var html='';state.items.forEach(function(it,idx){html+='<tr class="'+(it.status?'row-'+it.status:'')+'"><td class="center">'+(idx+1)+'</td><td><button type="button" class="container-link" data-edit="'+it.raw+'">'+formatRaw(it.raw)+'</button></td><td>'+statusBadge(it.status)+'</td><td>'+displayDate(it.date)+'</td><td>'+escapeHTML(it.note||'')+'</td></tr>'});b.innerHTML=html}
+function selectedStatuses(){return['OK','Repair','Hold','Reject'].filter(function(s){return el('filter'+s).checked})}
+function renderRecords(){var statuses=selectedStatuses(),from=el('dateFrom').value,to=el('dateTo').value;var list=state.items.filter(function(it){if(!it.status)return false;if(statuses.indexOf(it.status)<0)return false;if(from&&it.date<from)return false;if(to&&it.date>to)return false;return true});el('filteredCount').textContent=list.length+' 条记录';var b=el('recordBody');if(!list.length){b.innerHTML='<tr><td colspan="6" class="empty">没有符合筛选条件的检验记录</td></tr>';return}var html='';list.forEach(function(it,idx){html+='<tr class="row-'+it.status+'"><td class="center">'+(idx+1)+'</td><td><button type="button" class="container-link" data-edit="'+it.raw+'">'+formatRaw(it.raw)+'</button></td><td>'+statusBadge(it.status)+'</td><td>'+escapeHTML(displayDate(it.date))+'</td><td>'+escapeHTML(it.note||'')+'</td><td>'+escapeHTML(it.updatedAt||'')+'</td></tr>'});b.innerHTML=html}
+function renderOrientation(){var vertical=state.orientation==='vertical';el('horizontalBtn').classList.toggle('active',!vertical);el('verticalBtn').classList.toggle('active',vertical);el('camHorizontalBtn').classList.toggle('active',!vertical);el('camVerticalBtn').classList.toggle('active',vertical);el('scanFrame').className='scan '+state.orientation}
+function renderAll(){renderStats();renderMaster();renderRecords();renderOrientation()}
+function setOrientation(mode){state.orientation=mode==='vertical'?'vertical':'horizontal';save();renderOrientation()}
+function setAllFilters(checked){['OK','Repair','Hold','Reject'].forEach(function(s){el('filter'+s).checked=checked});el('filterAll').checked=checked;renderRecords()}
+function individualFilterChanged(){var boxes=['OK','Repair','Hold','Reject'].map(function(s){return el('filter'+s)});if(!boxes.some(function(b){return b.checked})){boxes.forEach(function(b){b.checked=true})}el('filterAll').checked=boxes.every(function(b){return b.checked});renderRecords()}
+function clearFilters(){el('dateFrom').value='';el('dateTo').value='';setAllFilters(true)}
+function openEdit(raw){var it=itemMap().get(raw);if(!it)return;state.editingRaw=raw;el('editNumber').textContent=formatRaw(raw);var radio=document.querySelector('input[name="editStatus"][value="'+it.status+'"]')||el('editBlank');radio.checked=true;el('editDate').value=it.date||'';el('editNote').value=it.note||'';el('editModal').classList.add('show')}
+function closeEdit(){el('editModal').classList.remove('show');state.editingRaw=''}
+function saveEdit(forceBlank){var it=itemMap().get(state.editingRaw);if(!it)return;var status=forceBlank?'':(document.querySelector('input[name="editStatus"]:checked')||el('editBlank')).value;it.status=status;it.date=status?(el('editDate').value||today()):'';it.note=status?el('editNote').value.trim():'';it.updatedAt=timeNow();it.source=it.source||'手动修改';save();renderAll();closeEdit();toast(status?'已更新为 '+status:'状态已清空')}
+function findManual(){if(!state.items.length){toast('请先生成箱号清单');return}var raw=cleanRaw(el('manualInput').value);if(raw.length===10&&/^[A-Z]{4}\d{6}$/.test(raw))raw+=checkDigit(raw);if(raw.length===11&&!validRaw(raw)){toast('箱号格式或检查号不正确');return}var it=itemMap().get(raw);if(!it){toast('该箱号不在预生成范围内');return}el('manualInput').value='';showRecognition(raw,'手动输入')}
+function loadScript(src,timeout){return new Promise(function(resolve,reject){var s=document.createElement('script'),timer=setTimeout(function(){s.remove();reject(new Error('OCR组件下载超时'))},timeout);s.async=true;s.src=src;s.onload=function(){clearTimeout(timer);resolve()};s.onerror=function(){clearTimeout(timer);s.remove();reject(new Error('OCR组件加载失败'))};document.head.appendChild(s)})}
+async function ensureOCR(){
+  if(state.ocrWorker)return state.ocrWorker;
+  if(state.ocrInitPromise)return state.ocrInitPromise;
+  state.ocrInitPromise=(async function(){
+    try{
+      if(!window.Tesseract){
+        setOCRProgress(.02,'正在加载站内OCR主程序');
+        await loadScript(OCR_SCRIPT,45000);
+      }
+      if(!window.Tesseract||typeof window.Tesseract.createWorker!=='function')throw new Error('站内 tesseract.min.js 未正确加载');
+      state.ocrLabel='初始化OCR';
+      var worker=await window.Tesseract.createWorker('eng',1,{
+        workerPath:OCR_WORKER,
+        corePath:OCR_CORE,
+        langPath:OCR_LANG,
+        logger:function(m){
+          var p=Number(m&&m.progress||0);
+          var msg=(state.ocrLabel||'OCR')+' · '+String(m&&m.status||'处理中');
+          setOCRProgress(p,msg);
+        }
+      });
+      await worker.setParameters({
+        tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        tessedit_pageseg_mode:'7',
+        preserve_interword_spaces:'1'
+      });
+      state.ocrWorker=worker;
+      setOCRProgress(1,'本地OCR已就绪');
+      setRuntime('<strong>本地 OCR 已就绪</strong><br>OCR 程序、核心和英文模型均从当前 GitHub Pages 站点加载，不再依赖手机访问外部 CDN。','ok');
+      return worker;
+    }catch(e){
+      state.ocrInitPromise=null;
+      var msg=e&&e.message?e.message:String(e||'OCR 初始化失败');
+      throw new Error('本地 OCR 组件加载失败：'+msg+'。请确认 GitHub Actions 已成功完成部署，且网址中存在 ocr 文件夹。');
+    }
+  })();
+  return state.ocrInitPromise;
+}
+function setOCRProgress(p,msg){p=Math.max(0,Math.min(1,Number(p)||0));el('progressWrap').classList.add('show');el('ocrProgress').value=p;el('ocrPercent').textContent=Math.round(p*100)+'%';el('ocrStatus').textContent=msg||'处理中';el('cameraProgress').value=p;el('cameraProgressText').textContent=Math.round(p*100)+'% · '+(msg||'处理中')}
+function preprocess(source,invert){var c=document.createElement('canvas');c.width=Math.max(1200,source.width);c.height=Math.max(250,Math.round(c.width*source.height/source.width));var x=c.getContext('2d',{alpha:false,willReadFrequently:true});x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(source,0,0,c.width,c.height);var im=x.getImageData(0,0,c.width,c.height),d=im.data;for(var i=0;i<d.length;i+=4){var g=.299*d[i]+.587*d[i+1]+.114*d[i+2];g=Math.max(0,Math.min(255,(g-128)*1.8+128));if(invert)g=255-g;d[i]=d[i+1]=d[i+2]=g;d[i+3]=255}x.putImageData(im,0,0);return c}
+function rotateCanvas(source,clockwise){var c=document.createElement('canvas');c.width=source.height;c.height=source.width;var x=c.getContext('2d',{alpha:false});x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.translate(c.width/2,c.height/2);x.rotate((clockwise?1:-1)*Math.PI/2);x.drawImage(source,-source.width/2,-source.height/2);return c}
+function normalizePositional(s){s=String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(s.length!==11)return null;var out='';for(var i=0;i<11;i++){var c=s.charAt(i);if(i<4){if(/[A-Z]/.test(c))out+=c;else if(D2L[c])out+=D2L[c];else return null}else{if(/\d/.test(c))out+=c;else if(L2D[c]!==undefined)out+=L2D[c];else return null}}return out}
+function extractWindows(text){var upper=String(text||'').toUpperCase(),runs=upper.match(/[A-Z0-9]{6,40}/g)||[],all=upper.replace(/[^A-Z0-9]/g,'');runs.push(all);var out=[],seen={};runs.forEach(function(run){if(run.length===11){var n=normalizePositional(run);if(n&&!seen[n]){seen[n]=1;out.push(n)}}for(var i=0;i<=run.length-11;i++){var n2=normalizePositional(run.slice(i,i+11));if(n2&&!seen[n2]){seen[n2]=1;out.push(n2)}}});return out}
+function weightedDistance(a,b){var score=0;for(var i=0;i<11;i++){if(a.charAt(i)!==b.charAt(i))score+=i<4?2.2:(i===10?1.3:1)}return score}
+function rankKnown(text){if(!state.items.length)return[];var windows=extractWindows(text),rank=new Map();var idx=itemMap();windows.forEach(function(w){if(idx.has(w))rank.set(w,0)});if(!windows.length){var serialish=String(text||'').toUpperCase().replace(/[OQD]/g,'0').replace(/[IL]/g,'1').replace(/Z/g,'2').replace(/S/g,'5').replace(/G/g,'6').replace(/B/g,'8').replace(/[^0-9]/g,'');for(var p=0;p<=serialish.length-6;p++){var serial=serialish.slice(p,p+6),first10=state.config.prefix+serial,raw=first10+checkDigit(first10);if(idx.has(raw))windows.push(raw)}}state.items.forEach(function(it){var best=99;windows.forEach(function(w){var d=weightedDistance(w,it.raw);if(d<best)best=d});if(best<99&&!rank.has(it.raw))rank.set(it.raw,best)});return Array.from(rank.entries()).sort(function(a,b){return a[1]-b[1]}).slice(0,5).map(function(x){return{raw:x[0],distance:x[1]}})}
+async function recognizeCanvas(canvas,sourceName){if(state.busy)return;state.busy=true;state.cameraWasOpen=el('cameraLayer').classList.contains('open');el('processingLayer').classList.add('show');el('processingTitle').textContent='正在识别箱号……';setOCRProgress(0,'准备中');try{if(!state.items.length)throw new Error('请先生成箱号清单');var worker=await ensureOCR();var variants=[];if(state.orientation==='vertical'){var cw=rotateCanvas(canvas,true),ccw=rotateCanvas(canvas,false);variants.push(preprocess(cw,false),preprocess(ccw,false),preprocess(cw,true))}else{variants.push(preprocess(canvas,false),preprocess(canvas,true))}var textAll='',bestRanks=[];for(var i=0;i<variants.length;i++){var label='识别图像 '+(i+1)+'/'+variants.length;state.ocrLabel=label;var res=await worker.recognize(variants[i]);var txt=res&&res.data?res.data.text||'':'';textAll+='\n'+txt;var ranks=rankKnown(textAll);if(ranks.length)bestRanks=ranks;if(ranks.length&&ranks[0].distance===0)break}releasePhoto();el('processingLayer').classList.remove('show');if(!bestRanks.length){showCandidates([],sourceName,'未识别出预生成范围内的箱号，请重新拍摄或手动输入。');return}var top=bestRanks[0],second=bestRanks[1];if(top.distance===0||(top.distance<=1.3&&(!second||second.distance-top.distance>=1))){showRecognition(top.raw,sourceName);return}showCandidates(bestRanks.slice(0,3),sourceName,'识别结果不够唯一，请选择最接近的箱号。')}catch(e){releasePhoto();el('processingLayer').classList.remove('show');setRuntime('<strong>识别失败</strong><br>'+escapeHTML(e.message||e),'bad');toast(e.message||'识别失败')}finally{state.busy=false}}
+function releasePhoto(){el('cameraInput').value='';el('galleryInput').value='';setOCRProgress(0,'准备下一张');setTimeout(function(){el('progressWrap').classList.remove('show')},700)}
+function showCandidates(ranks,sourceName,message){state.currentRaw='';el('recognitionTitle').textContent='需要人工确认';el('recognizedNumber').textContent=ranks.length?'请选择候选箱号':'未识别';el('recognitionMessage').textContent=message||'';el('recognitionFields').style.display='none';var list=el('candidateList');list.innerHTML=ranks.map(function(r){return'<button type="button" class="candidate" data-candidate="'+r.raw+'">'+formatRaw(r.raw)+'</button>'}).join('');el('recognitionPanel').dataset.source=sourceName||'OCR';el('recognitionPanel').classList.add('show')}
+function showRecognition(raw,sourceName){var it=itemMap().get(raw);if(!it){toast('识别号码不在范围内');return}state.currentRaw=raw;el('recognitionTitle').textContent=it.status?'该箱号已有记录，可直接更新':'选择检验状态';el('recognizedNumber').textContent=formatRaw(raw);el('recognitionMessage').textContent=it.status?('当前：'+it.status+'，'+(it.date||'')):'识别完成。选择状态后自动记录日期。';el('candidateList').innerHTML='';el('recognitionFields').style.display='block';el('recognitionDate').value=it.date||today();el('recognitionNote').value=it.note||'';el('recognitionPanel').dataset.source=sourceName||'OCR';el('recognitionPanel').classList.add('show')}
+function chooseCandidate(raw){showRecognition(raw,el('recognitionPanel').dataset.source||'OCR')}
+function commitRecognition(status){var it=itemMap().get(state.currentRaw);if(!it)return;it.status=status;it.date=el('recognitionDate').value||today();it.note=el('recognitionNote').value.trim();it.updatedAt=timeNow();it.source=el('recognitionPanel').dataset.source||'OCR';save();renderAll();closeRecognition();toast(formatRaw(it.raw)+' 已记录为 '+status)}
+function closeRecognition(){el('recognitionPanel').classList.remove('show');state.currentRaw='';el('candidateList').innerHTML='';if(state.cameraWasOpen&&state.stream){setTimeout(function(){el('processingLayer').classList.remove('show')},50)}}
+async function startCamera(){if(state.stream){state.stream.getTracks().forEach(function(t){t.stop()});state.stream=null}state.stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:state.facing},width:{ideal:3840},height:{ideal:2160}}});var video=el('cameraVideo');video.srcObject=state.stream;await new Promise(function(resolve,reject){var timer=setTimeout(function(){reject(new Error('相机启动超时'))},12000);video.onloadedmetadata=function(){clearTimeout(timer);video.play().then(resolve).catch(reject)}})}
+async function openCamera(){if(!state.items.length){toast('请先生成箱号清单');return}if(!window.isSecureContext){alert('实时识别框相机需要通过 HTTPS 网页打开。当前环境不支持，请使用“手机相机”或“从相册选择”。');return}if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){toast('当前浏览器不支持实时网页相机');return}el('cameraLayer').classList.add('open');document.body.classList.add('camera-on');try{await startCamera();setRuntime('<strong>连续相机已打开</strong><br>选择横向或竖向识别框，拍摄后相机保持开启。','ok')}catch(e){closeCamera();setRuntime('<strong>相机无法启动</strong><br>'+escapeHTML(e.message||e)+'。请检查相机权限或使用手机相机按钮。','bad')}}
+function closeCamera(){if(state.stream){state.stream.getTracks().forEach(function(t){t.stop()});state.stream=null}el('cameraVideo').srcObject=null;el('cameraLayer').classList.remove('open');document.body.classList.remove('camera-on');el('processingLayer').classList.remove('show')}
+function cropVideo(){var v=el('cameraVideo'),vr=v.getBoundingClientRect(),fr=el('scanFrame').getBoundingClientRect(),vw=v.videoWidth,vh=v.videoHeight;if(!vw||!vh)throw new Error('相机尚未准备好');var scale=Math.max(vr.width/vw,vr.height/vh),rw=vw*scale,rh=vh*scale,hx=(rw-vr.width)/2,hy=(rh-vr.height)/2;var sx=(fr.left-vr.left+hx)/scale,sy=(fr.top-vr.top+hy)/scale,sw=fr.width/scale,sh=fr.height/scale;sx=Math.max(0,Math.min(vw-1,sx));sy=Math.max(0,Math.min(vh-1,sy));sw=Math.max(1,Math.min(vw-sx,sw));sh=Math.max(1,Math.min(vh-sy,sh));var c=document.createElement('canvas'),target=state.orientation==='vertical'?Math.max(1400,Math.round(sh)):Math.max(1400,Math.round(sw));if(state.orientation==='vertical'){c.height=Math.min(2600,target);c.width=Math.max(260,Math.round(c.height*sw/sh))}else{c.width=Math.min(2600,target);c.height=Math.max(260,Math.round(c.width*sh/sw))}c.getContext('2d',{alpha:false}).drawImage(v,sx,sy,sw,sh,0,0,c.width,c.height);return c}
+async function capture(){if(state.busy){toast('上一张仍在识别');return}try{await recognizeCanvas(cropVideo(),'连续相机')}catch(e){toast(e.message||'拍摄失败')}}
+function cropImageByOrientation(img){var iw=img.naturalWidth,ih=img.naturalHeight,targetRatio=state.orientation==='vertical'?1/5.2:5.2,sx=0,sy=0,sw=iw,sh=ih,current=iw/ih;if(current>targetRatio){sw=ih*targetRatio;sx=(iw-sw)/2}else{sh=iw/targetRatio;sy=(ih-sh)/2}var c=document.createElement('canvas');if(state.orientation==='vertical'){c.height=Math.min(2600,Math.max(1400,Math.round(sh)));c.width=Math.max(260,Math.round(c.height*sw/sh))}else{c.width=Math.min(2600,Math.max(1400,Math.round(sw)));c.height=Math.max(260,Math.round(c.width*sh/sw))}c.getContext('2d',{alpha:false}).drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);return c}
+function readImageFile(file,sourceName){if(!file)return;if(!state.items.length){toast('请先生成箱号清单');releasePhoto();return}if(state.busy){toast('上一张仍在识别');releasePhoto();return}var reader=new FileReader();reader.onerror=function(){toast('无法读取照片');releasePhoto()};reader.onload=function(){var img=new Image();img.onload=function(){var c=cropImageByOrientation(img);reader.onload=null;img.onload=null;img.src='';recognizeCanvas(c,sourceName)};img.onerror=function(){toast('无法解码照片，若为HEIC请先截图后选择');releasePhoto()};img.src=reader.result};reader.readAsDataURL(file)}
+function exportCSV(){if(!state.items.length){toast('没有可导出的数据');return}var rows=[['No.','Container No.','Status','Inspection Date','Note','Updated Time','Source']];state.items.forEach(function(it,idx){rows.push([idx+1,formatRaw(it.raw),it.status,displayDate(it.date),it.note,it.updatedAt,it.source])});var csv='\ufeff'+rows.map(function(row){return row.map(function(v){return'"'+String(v==null?'':v).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');var blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(state.config?state.config.prefix+'_'+state.config.start+'-'+state.config.end:'Container_Inspection')+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},500);toast('CSV 已导出')}
+function bind(){['prefixInput','startInput','endInput'].forEach(function(id){el(id).addEventListener('input',normalizeSetupInputs)});el('generateBtn').addEventListener('click',generateList);el('clearAllBtn').addEventListener('click',clearAll);el('horizontalBtn').addEventListener('click',function(){setOrientation('horizontal')});el('verticalBtn').addEventListener('click',function(){setOrientation('vertical')});el('camHorizontalBtn').addEventListener('click',function(){setOrientation('horizontal')});el('camVerticalBtn').addEventListener('click',function(){setOrientation('vertical')});el('openCameraBtn').addEventListener('click',openCamera);el('prepareOcrBtn').addEventListener('click',async function(){if(state.busy)return;try{state.busy=true;el('processingLayer').classList.add('show');el('processingTitle').textContent='正在准备本地 OCR……';await ensureOCR();toast('本地 OCR 已就绪')}catch(e){setRuntime('<strong>OCR 准备失败</strong><br>'+escapeHTML(e.message||e),'bad');toast('OCR 准备失败')}finally{state.busy=false;el('processingLayer').classList.remove('show')}});el('closeCameraBtn').addEventListener('click',closeCamera);el('finishCameraBtn').addEventListener('click',closeCamera);el('switchCameraBtn').addEventListener('click',async function(){state.facing=state.facing==='environment'?'user':'environment';try{await startCamera()}catch(e){toast('切换相机失败')}});el('shutterBtn').addEventListener('click',capture);el('cameraInput').addEventListener('change',function(){var f=this.files&&this.files[0];readImageFile(f,'手机相机')});el('galleryInput').addEventListener('change',function(){var f=this.files&&this.files[0];readImageFile(f,'相册')});el('manualBtn').addEventListener('click',findManual);el('manualInput').addEventListener('keydown',function(e){if(e.key==='Enter')findManual()});el('manualInput').addEventListener('input',function(){this.value=formatRaw(this.value)});el('filterAll').addEventListener('change',function(){setAllFilters(this.checked)});['OK','Repair','Hold','Reject'].forEach(function(s){el('filter'+s).addEventListener('change',individualFilterChanged)});el('dateFrom').addEventListener('change',renderRecords);el('dateTo').addEventListener('change',renderRecords);el('todayBtn').addEventListener('click',function(){el('dateFrom').value=today();el('dateTo').value=today();renderRecords()});el('clearFilterBtn').addEventListener('click',clearFilters);el('exportBtn').addEventListener('click',exportCSV);document.addEventListener('click',function(e){var edit=e.target.closest('[data-edit]');if(edit)openEdit(edit.dataset.edit);var candidate=e.target.closest('[data-candidate]');if(candidate)chooseCandidate(candidate.dataset.candidate)});document.querySelectorAll('#recognitionPanel [data-status]').forEach(function(btn){btn.addEventListener('click',function(){commitRecognition(this.dataset.status)})});el('retryBtn').addEventListener('click',closeRecognition);el('closeEditBtn').addEventListener('click',closeEdit);el('saveEditBtn').addEventListener('click',function(){saveEdit(false)});el('clearStatusBtn').addEventListener('click',function(){saveEdit(true)});el('editModal').addEventListener('click',function(e){if(e.target===this)closeEdit()});el('recognitionPanel').addEventListener('click',function(e){if(e.target===this)closeRecognition()})}
+load();bind();if(state.config){el('prefixInput').value=state.config.prefix||'';el('startInput').value=state.config.start||'';el('endInput').value=state.config.end||''}renderAll();setRuntime('<strong>网页脚本已启动</strong><br>数据保存在当前浏览器本地；'+(window.isSecureContext?'正在后台准备站内 OCR。':'实时识别框相机需要 HTTPS。'),'ok');
+if('serviceWorker' in navigator&&window.isSecureContext){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){})})}
+setTimeout(function(){if(window.isSecureContext&&!state.ocrWorker&&!state.busy){ensureOCR().catch(function(e){setRuntime('<strong>本地 OCR 尚未就绪</strong><br>'+escapeHTML(e.message||e),'bad')})}},900);
+})();
+</script>
+</body>
+</html>
