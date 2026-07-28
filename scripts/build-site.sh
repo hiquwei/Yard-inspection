@@ -28,7 +28,7 @@ fetch_file() {
 # Tesseract.js browser API and Worker (pinned versions)
 fetch_file "https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js" "$OCR/tesseract.min.js"
 fetch_file "https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/worker.min.js" "$OCR/worker.min.js"
-fetch_file "https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js.LICENSE.txt" "$OCR/licenses/tesseract.js-LICENSE.txt"
+fetch_file "https://raw.githubusercontent.com/naptha/tesseract.js/v5.1.1/LICENSE.md" "$OCR/licenses/tesseract.js-LICENSE.md"
 
 # Tesseract.js Core. Official local-installation guidance requires all four files.
 BASE_CORE="https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.0"
