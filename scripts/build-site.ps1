@@ -1,31 +1,33 @@
-﻿$ErrorActionPreference = 'Stop'
-$Root = Split-Path -Parent $PSScriptRoot
-$Site = Join-Path $Root '_site'
-$Ocr = Join-Path $Site 'ocr'
-$Core = Join-Path $Ocr 'core'
-$Lang = Join-Path $Ocr 'lang'
-Remove-Item $Site -Recurse -Force -ErrorAction SilentlyContinue
-New-Item $Core -ItemType Directory -Force | Out-Null
-New-Item $Lang -ItemType Directory -Force | Out-Null
-New-Item (Join-Path $Site 'icons') -ItemType Directory -Force | Out-Null
-New-Item (Join-Path $Ocr 'licenses') -ItemType Directory -Force | Out-Null
-Copy-Item (Join-Path $Root 'index.html') $Site
-Copy-Item (Join-Path $Root 'manifest.webmanifest') $Site
-Copy-Item (Join-Path $Root 'sw.js') $Site
-Copy-Item (Join-Path $Root 'diagnostic-test-card.html') $Site
-Copy-Item (Join-Path $Root '.nojekyll') $Site
-Copy-Item (Join-Path $Root 'icons\*') (Join-Path $Site 'icons')
-function Get-Asset([string]$Url,[string]$Out) {
-  Write-Host "Downloading: $Url"
-  Invoke-WebRequest -Uri $Url -OutFile $Out -UseBasicParsing
+$ErrorActionPreference = "Stop"
+$Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+Set-Location $Root
+$ModelDir = Join-Path $Root "public\models"
+New-Item -ItemType Directory -Force -Path $ModelDir | Out-Null
+
+function Get-RequiredFile([string]$Url, [string]$Output, [long]$MinimumSize) {
+    if ((Test-Path $Output) -and ((Get-Item $Output).Length -ge $MinimumSize)) {
+        Write-Host "Using cached file: $Output"
+        return
+    }
+    Write-Host "Downloading: $Url"
+    $Temp = "$Output.part"
+    Invoke-WebRequest -Uri $Url -OutFile $Temp -UseBasicParsing
+    Move-Item -Force $Temp $Output
+    if ((Get-Item $Output).Length -lt $MinimumSize) {
+        throw "$Output is unexpectedly small."
+    }
 }
-Get-Asset 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js' (Join-Path $Ocr 'tesseract.min.js')
-Get-Asset 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/worker.min.js' (Join-Path $Ocr 'worker.min.js')
-Get-Asset 'https://raw.githubusercontent.com/naptha/tesseract.js/v5.1.1/LICENSE.md' (Join-Path $Ocr 'licenses\tesseract.js-LICENSE.md')
-$BaseCore='https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.0'
-@('tesseract-core.wasm.js','tesseract-core-simd.wasm.js','tesseract-core-lstm.wasm.js','tesseract-core-simd-lstm.wasm.js') | ForEach-Object { Get-Asset "$BaseCore/$_" (Join-Path $Core $_) }
-Get-Asset "$BaseCore/LICENSE" (Join-Path $Ocr 'licenses\tesseract.js-core-LICENSE.txt')
-Get-Asset 'https://raw.githubusercontent.com/naptha/tessdata/gh-pages/4.0.0_fast/eng.traineddata.gz' (Join-Path $Lang 'eng.traineddata.gz')
-Get-Asset 'https://raw.githubusercontent.com/naptha/tessdata/gh-pages/LICENSE' (Join-Path $Ocr 'licenses\tessdata-LICENSE.txt')
-Copy-Item (Join-Path $Site 'index.html') (Join-Path $Site '404.html')
-Write-Host "Build complete: $Site"
+
+Get-RequiredFile "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_det_onnx_infer.tar" (Join-Path $ModelDir "PP-OCRv5_mobile_det_onnx_infer.tar") 1000000
+Get-RequiredFile "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_rec_onnx_infer.tar" (Join-Path $ModelDir "PP-OCRv5_mobile_rec_onnx_infer.tar") 1000000
+
+npm install --no-audit --no-fund
+npm run build
+
+$OrtDir = Join-Path $Root "dist\ort"
+New-Item -ItemType Directory -Force -Path $OrtDir | Out-Null
+Get-ChildItem (Join-Path $Root "node_modules\onnxruntime-web\dist") -File | Where-Object {
+    $_.Name -like "ort-wasm*.wasm" -or $_.Name -like "ort-wasm*.mjs" -or $_.Name -like "ort-wasm*.js"
+} | Copy-Item -Destination $OrtDir -Force
+New-Item -ItemType File -Force -Path (Join-Path $Root "dist\.nojekyll") | Out-Null
+Write-Host "Build completed successfully: $Root\dist"

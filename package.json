@@ -1,0 +1,24 @@
+{
+  "name": "tex-yard-inspection-paddleocr",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@paddleocr/paddleocr-js": "0.4.2",
+    "onnxruntime-web": "1.22.0"
+  },
+  "devDependencies": {
+    "vite": "6.4.1"
+  },
+  "overrides": {
+    "onnxruntime-web": "1.22.0",
+    "@techstark/opencv-js": "4.10.0-release.1",
+    "clipper-lib": "6.4.2",
+    "js-yaml": "4.1.0"
+  }
+}

@@ -1,45 +1,42 @@
-# Container Inspection OCR — Diagnostic Build
+# Tex Yard Inspection
 
-本目录为可诊断版本。页面版本：`2026.07.28-diagnostic-1`。
+Mobile container-yard inspection web application using the official browser SDK `@paddleocr/paddleocr-js` with PP-OCRv5 mobile detection and recognition models.
 
-# 集装箱箱号识别与检验状态记录｜GitHub Pages 完整部署包
+## Recognition design
 
-这个包用于把网页部署到 GitHub Pages。GitHub Actions 会在部署阶段自动下载并放入站内：
+The camera captures the complete container number, but the application only uses a six-digit serial number from PaddleOCR output. The four-letter prefix comes from the generated range and the ISO 6346 check digit is recalculated by the application. This prevents the check-digit box and prefix recognition errors from controlling the result.
 
-- Tesseract.js 5.1.1
-- Tesseract Worker 5.1.1
-- Tesseract.js Core 5.1.0 的四个兼容核心
-- English `4.0.0_fast` 识别模型
+## Main functions
 
-手机运行时从你自己的 GitHub Pages 地址加载这些文件，不再依赖手机直接访问 jsDelivr、unpkg 或语言模型网站。
+- Horizontal and vertical camera frames.
+- Three-frame camera burst and candidate voting.
+- PaddleOCR text detection before text recognition.
+- Six-digit serial-number extraction constrained to the generated range.
+- Automatic ISO 6346 check-digit calculation.
+- Statuses: OK, Repair, Hold, Reject; uninspected status remains blank.
+- Automatic inspection date.
+- Date and multi-status filters.
+- Full generated list is collapsed by default.
+- Click any container number to edit its status, date, and note.
+- CSV export and JSON backup/restore.
+- Built-in PaddleOCR diagnostics.
+- Temporary camera images are released after recognition and are not stored in inspection records.
 
-## 最简单的部署步骤
-
-1. 新建一个 GitHub 仓库，例如 `container-inspection`。
-2. 将本 ZIP 解压后的**全部文件和文件夹**上传到仓库根目录，必须保留 `.github/workflows/pages.yml`。
-3. 在仓库 `Settings → Pages` 中，将 `Source` 设为 **GitHub Actions**。
-4. 打开仓库的 `Actions`，等待 `Deploy Container Inspection OCR` 变为绿色。
-5. 返回 `Settings → Pages`，打开 GitHub 给出的 HTTPS 地址。
-6. 必须用 iPhone 的 Safari 打开网址，并允许相机权限。
-
-详细图文式步骤见 `部署说明_中文.md`。
-
-## 数据说明
-
-检验记录保存在当前浏览器的 localStorage 中，不会上传到 GitHub。请定期导出 CSV；清除 Safari 网站数据、换手机或换浏览器会导致本机记录不可见。
-
-## 本地构建（可选）
-
-Windows PowerShell：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scriptsuild-site.ps1
-```
-
-Linux / macOS：
+## Build
 
 ```bash
 bash scripts/build-site.sh
 ```
 
-构建结果位于 `_site`。实时网页相机仍要求通过 HTTPS 或 localhost 打开。
+The build script downloads the official PP-OCRv5 mobile ONNX model archives, installs the pinned browser SDK, builds the Vite application, and copies ONNX Runtime WebAssembly assets into `dist/`.
+
+## GitHub Pages
+
+Upload the repository files, select **Settings → Pages → GitHub Actions**, and allow the included workflow to finish. The workflow publishes the `dist` directory.
+
+## Runtime notes
+
+- Use the GitHub Pages HTTPS address in Safari.
+- The first PaddleOCR initialization is slower because models are loaded into browser memory.
+- GitHub Pages does not provide COOP/COEP headers, so this build uses one WebAssembly thread for broad iPhone compatibility.
+- Browser records are stored in local storage. Export backups regularly.

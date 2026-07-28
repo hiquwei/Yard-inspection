@@ -1,0 +1,23 @@
+Tex Yard Inspection PaddleOCR Package
+Version: 2026.07.28-paddleocr-1
+
+.github/workflows/main.yml
+.gitignore
+.nojekyll
+DEPLOYMENT_GUIDE_CN.md
+README.md
+THIRD_PARTY_NOTICES.md
+UPDATE_GUIDE_CN.md
+index.html
+package.json
+public/app-version.json
+public/diagnostic-test-card.html
+public/icons/icon-192.png
+public/icons/icon-512.png
+public/manifest.webmanifest
+public/sw.js
+scripts/build-site.ps1
+scripts/build-site.sh
+src/main.js
+src/styles.css
+vite.config.js

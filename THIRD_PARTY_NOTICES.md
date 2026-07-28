@@ -1,9 +1,16 @@
-# 第三方组件说明
+# Third-Party Notices
 
-部署工作流会获取以下开源组件：
+This project uses the following open-source software and model assets:
 
-- Tesseract.js 5.1.1 — Apache-2.0
-- tesseract.js-core 5.1.0 — Apache-2.0
-- naptha/tessdata English 4.0.0_fast — Apache-2.0
+- PaddleOCR.js (`@paddleocr/paddleocr-js`), Apache License 2.0.
+- PaddleOCR PP-OCRv5 mobile text-detection and text-recognition ONNX model archives, provided by PaddlePaddle.
+- ONNX Runtime Web, MIT License.
+- OpenCV.js through `@techstark/opencv-js`, Apache License 2.0.
+- Vite, MIT License.
 
-部署时相应许可证会被复制到网站的 `ocr/licenses/` 目录。
+The build process downloads the following official PaddleOCR model assets:
+
+- `PP-OCRv5_mobile_det_onnx_infer.tar`
+- `PP-OCRv5_mobile_rec_onnx_infer.tar`
+
+Refer to the upstream packages and repositories for full license texts and attribution requirements.
