@@ -1,7 +1,8 @@
 import "./styles.css";
 import { PaddleOCR } from "@paddleocr/paddleocr-js";
+import ExcelJS from "exceljs";
 
-const APP_VERSION = "2026.07.28-paddleocr-1";
+const APP_VERSION = "2026.07.29-paddleocr-2";
 const STORAGE_KEY = "texYardInspectionPaddleOCR_v1";
 const RAL_3009 = "#5e2028";
 const STATUS_VALUES = ["", "OK", "Repair", "Hold", "Reject"];
@@ -18,7 +19,13 @@ const DIGIT_SUBSTITUTIONS = {
 const app = document.querySelector("#app");
 app.innerHTML = `
   <main class="app-shell">
-    <header class="hero"><h1>Tex Yard Inspection</h1></header>
+    <header class="hero">
+      <h1>Tex Yard Inspection</h1>
+      <div class="hero-actions">
+        <button id="saveAsBtn" class="btn btn-rust" type="button">Save As</button>
+        <button id="exportExcelBtn" class="btn btn-dark" type="button">Export Excel</button>
+      </div>
+    </header>
 
     <section class="card setup-card">
       <div class="card-head"><h2>Container Range</h2><span class="small">The check digit is calculated automatically.</span></div>
@@ -83,7 +90,7 @@ app.innerHTML = `
       </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
-          <thead><tr><th class="center">No.</th><th>Container Number</th><th>Status</th><th>Inspection Date</th><th>Note</th><th>Updated</th></tr></thead>
+          <thead><tr><th>Serial No.</th><th>Container No.</th><th>Inspection Date</th><th>Latest Status</th><th>Updated Date</th><th>Note</th></tr></thead>
           <tbody id="filteredBody"><tr><td colspan="6" class="empty">No container list has been generated.</td></tr></tbody>
         </table>
       </div>
@@ -99,8 +106,8 @@ app.innerHTML = `
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th class="center">No.</th><th>Container Number</th><th>Status</th><th>Inspection Date</th><th>Note</th></tr></thead>
-            <tbody id="masterBody"><tr><td colspan="5" class="empty">No container list has been generated.</td></tr></tbody>
+            <thead><tr><th>Serial No.</th><th>Container No.</th><th>Inspection Date</th><th>Latest Status</th><th>Updated Date</th><th>Note</th></tr></thead>
+            <tbody id="masterBody"><tr><td colspan="6" class="empty">No container list has been generated.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -125,7 +132,10 @@ app.innerHTML = `
       <div id="recognitionMessage" class="small"></div>
       <div id="candidateList" class="candidate-list"></div>
       <div id="recognitionFields">
-        <div class="field"><label for="recognitionDate">Inspection Date</label><input id="recognitionDate" type="date"></div>
+        <div class="record-date-grid">
+          <div class="field"><label for="recognitionDate">Original Inspection Date</label><input id="recognitionDate" type="date"></div>
+          <div class="field"><label for="recognitionUpdatedDate">Updated Date</label><input id="recognitionUpdatedDate" type="date" disabled></div>
+        </div>
         <div class="field" style="margin-top:9px"><label for="recognitionNote">Note</label><textarea id="recognitionNote" placeholder="Repair details, hold reason, rejection reason, etc."></textarea></div>
         <div class="status-buttons"><button class="btn btn-ok" data-status="OK" type="button">OK</button><button class="btn btn-repair" data-status="Repair" type="button">Repair</button><button class="btn btn-hold" data-status="Hold" type="button">Hold</button><button class="btn btn-reject" data-status="Reject" type="button">Reject</button></div>
       </div>
@@ -135,18 +145,32 @@ app.innerHTML = `
 
   <section id="editModal" class="modal">
     <div class="modal-card">
-      <div class="card-head"><h2>Edit Container Status</h2><button id="closeEditBtn" class="btn btn-light" type="button">Close</button></div>
+      <div class="card-head"><h2>Update Container Status</h2><button id="closeEditBtn" class="btn btn-light" type="button">Close</button></div>
       <div id="editNumber" class="recognized-number">—</div>
-      <div class="radio-grid">
-        <span class="radio-option"><input id="editBlank" name="editStatus" type="radio" value=""><label for="editBlank">Blank</label></span>
-        <span class="radio-option"><input id="editOK" name="editStatus" type="radio" value="OK"><label for="editOK" style="color:var(--ok)">OK</label></span>
-        <span class="radio-option"><input id="editRepair" name="editStatus" type="radio" value="Repair"><label for="editRepair" style="color:var(--repair)">Repair</label></span>
-        <span class="radio-option"><input id="editHold" name="editStatus" type="radio" value="Hold"><label for="editHold" style="color:var(--hold)">Hold</label></span>
-        <span class="radio-option"><input id="editReject" name="editStatus" type="radio" value="Reject"><label for="editReject" style="color:var(--reject)">Reject</label></span>
+      <div class="record-date-grid">
+        <div class="date-readout"><span>Original Inspection Date</span><strong id="editInspectionDateText">—</strong></div>
+        <div class="date-readout"><span>Updated Date</span><strong id="editUpdatedDateText">—</strong></div>
       </div>
-      <div class="field"><label for="editDate">Inspection Date</label><input id="editDate" type="date"></div>
-      <div class="field" style="margin-top:9px"><label for="editNote">Note</label><textarea id="editNote"></textarea></div>
-      <div class="button-row" style="margin-top:12px"><button id="saveEditBtn" class="btn btn-rust" type="button">Save Changes</button><button id="clearStatusBtn" class="btn btn-danger" type="button">Clear Status</button></div>
+      <div class="field" style="margin-top:11px"><label for="editNote">Note</label><textarea id="editNote" placeholder="Optional note"></textarea></div>
+      <p class="modal-copy">Choose a status to save immediately. The original Inspection Date is retained; Updated Date changes to today.</p>
+      <div class="status-buttons">
+        <button class="btn btn-ok" data-edit-status="OK" type="button">OK</button>
+        <button class="btn btn-repair" data-edit-status="Repair" type="button">Repair</button>
+        <button class="btn btn-hold" data-edit-status="Hold" type="button">Hold</button>
+        <button class="btn btn-reject" data-edit-status="Reject" type="button">Reject</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="saveAsModal" class="modal">
+    <div class="modal-card save-as-card">
+      <div class="card-head"><h2>Save As</h2><button id="closeSaveAsBtn" class="btn btn-light" type="button">Close</button></div>
+      <p class="modal-copy">Both options create a data-embedded HTML file containing the current container list, Inspection Date, Latest Status, Updated Date and notes.</p>
+      <div class="save-actions">
+        <button id="saveHtmlBtn" class="btn btn-rust" type="button">Save as HTML</button>
+        <button id="shareHtmlBtn" class="btn btn-dark" type="button">Share via WeChat</button>
+      </div>
+      <p class="small" style="margin:12px 0 0">For WeChat, choose WeChat from the system share sheet. If file sharing is unavailable, the HTML file will be downloaded instead.</p>
     </div>
   </section>
 
@@ -202,6 +226,21 @@ function timestamp() {
   return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 function displayDate(value) { return String(value || "").replaceAll("-", "/"); }
+function dateFromTimestamp(value) {
+  const match = String(value || "").match(/^(\d{4})[\/-](\d{2})[\/-](\d{2})/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : "";
+}
+function migrateItem(item) {
+  const copy = { ...item };
+  copy.serial = String(copy.serial || String(copy.raw || "").slice(4, 10)).padStart(6, "0").slice(-6);
+  copy.status = STATUS_VALUES.includes(copy.status) ? copy.status : "";
+  copy.date = String(copy.date || copy.inspectionDate || "").slice(0, 10);
+  copy.updatedDate = String(copy.updatedDate || dateFromTimestamp(copy.updatedAt) || (copy.status ? copy.date : "")).slice(0, 10);
+  copy.note = String(copy.note || "");
+  copy.updatedAt = String(copy.updatedAt || "");
+  copy.source = String(copy.source || "");
+  return copy;
+}
 function toast(message, duration = 2600) {
   const node = $("toast");
   node.textContent = message;
@@ -258,7 +297,7 @@ function loadState() {
     const payload = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
     if (!payload) return;
     state.config = payload.config || null;
-    state.items = Array.isArray(payload.items) ? payload.items : [];
+    state.items = Array.isArray(payload.items) ? payload.items.map(migrateItem) : [];
     state.orientation = payload.orientation === "vertical" ? "vertical" : "horizontal";
   } catch {
     state.config = null;
@@ -290,7 +329,7 @@ function generateList() {
     const firstTen = `${prefix}${serial}`;
     const raw = `${firstTen}${checkDigit(firstTen)}`;
     const old = previous.get(raw);
-    items.push(old ? { ...old, serial } : { raw, serial, status: "", date: "", note: "", updatedAt: "", source: "" });
+    items.push(old ? { ...old, serial } : { raw, serial, status: "", date: "", updatedDate: "", note: "", updatedAt: "", source: "" });
   }
   state.config = { prefix, start: startString, end: endString };
   state.items = items;
@@ -328,12 +367,12 @@ function renderStats() {
 }
 function renderMaster() {
   const body = $("masterBody");
-  if (!state.items.length) { body.innerHTML = '<tr><td colspan="5" class="empty">No container list has been generated.</td></tr>'; return; }
-  body.innerHTML = state.items.map((item, index) => `
+  if (!state.items.length) { body.innerHTML = '<tr><td colspan="6" class="empty">No container list has been generated.</td></tr>'; return; }
+  body.innerHTML = state.items.map((item) => `
     <tr class="${item.status ? `row-${item.status}` : ""}">
-      <td class="center">${index + 1}</td>
+      <td class="mono">${escapeHTML(item.serial)}</td>
       <td><button class="container-link" data-edit="${item.raw}" type="button">${formatRaw(item.raw)}</button></td>
-      <td>${statusBadge(item.status)}</td><td>${displayDate(item.date)}</td><td>${escapeHTML(item.note)}</td>
+      <td>${displayDate(item.date)}</td><td>${statusBadge(item.status)}</td><td>${displayDate(item.updatedDate)}</td><td>${escapeHTML(item.note)}</td>
     </tr>`).join("");
 }
 function selectedStatuses() {
@@ -357,11 +396,11 @@ function renderFiltered() {
   const body = $("filteredBody");
   if (!state.items.length) { body.innerHTML = '<tr><td colspan="6" class="empty">No container list has been generated.</td></tr>'; return; }
   if (!list.length) { body.innerHTML = '<tr><td colspan="6" class="empty">No containers match the current filter.</td></tr>'; return; }
-  body.innerHTML = list.map((item, index) => `
+  body.innerHTML = list.map((item) => `
     <tr class="${item.status ? `row-${item.status}` : ""}">
-      <td class="center">${index + 1}</td>
+      <td class="mono">${escapeHTML(item.serial)}</td>
       <td><button class="container-link" data-edit="${item.raw}" type="button">${formatRaw(item.raw)}</button></td>
-      <td>${statusBadge(item.status)}</td><td>${displayDate(item.date)}</td><td>${escapeHTML(item.note)}</td><td>${escapeHTML(item.updatedAt)}</td>
+      <td>${displayDate(item.date)}</td><td>${statusBadge(item.status)}</td><td>${displayDate(item.updatedDate)}</td><td>${escapeHTML(item.note)}</td>
     </tr>`).join("");
 }
 function renderOrientation() {
@@ -394,23 +433,22 @@ function openEdit(raw) {
   if (!item) return;
   state.editingRaw = raw;
   $("editNumber").textContent = formatRaw(raw);
-  const radio = document.querySelector(`input[name="editStatus"][value="${item.status}"]`) || $("editBlank");
-  radio.checked = true;
-  $("editDate").value = item.date || "";
+  $("editInspectionDateText").textContent = displayDate(item.date) || "Not inspected";
+  $("editUpdatedDateText").textContent = displayDate(item.updatedDate) || "—";
   $("editNote").value = item.note || "";
   $("editModal").classList.add("show");
 }
 function closeEdit() { $("editModal").classList.remove("show"); state.editingRaw = ""; }
-function saveEdit(forceBlank = false) {
+function applyEditStatus(status) {
   const item = itemMap().get(state.editingRaw);
-  if (!item) return;
-  const status = forceBlank ? "" : (document.querySelector('input[name="editStatus"]:checked')?.value || "");
+  if (!item || !["OK", "Repair", "Hold", "Reject"].includes(status)) return;
+  if (!item.date) item.date = today();
   item.status = status;
-  item.date = status ? ($("editDate").value || today()) : "";
-  item.note = status ? $("editNote").value.trim() : "";
+  item.note = $("editNote").value.trim();
+  item.updatedDate = today();
   item.updatedAt = timestamp();
   item.source = item.source || "Manual edit";
-  saveState(); renderAll(); closeEdit(); toast(status ? `Status changed to ${status}.` : "Status cleared.");
+  saveState(); renderAll(); closeEdit(); toast(`${formatRaw(item.raw)} updated to ${status}.`);
 }
 
 function siteAsset(path) { return new URL(path, document.baseURI).href; }
@@ -709,10 +747,12 @@ function showRecognition(raw, sourceName) {
   state.currentRaw = raw;
   $("recognitionTitle").textContent = item.status ? "Existing Inspection Record" : "Select Inspection Status";
   $("recognizedNumber").textContent = formatRaw(raw);
-  $("recognitionMessage").textContent = item.status ? `Current status: ${item.status} on ${displayDate(item.date)}.` : "The prefix and check digit were generated automatically from the recognized six-digit serial number.";
+  $("recognitionMessage").textContent = item.status ? `Current status: ${item.status}. Original Inspection Date: ${displayDate(item.date)}. Updated Date: ${displayDate(item.updatedDate) || "—"}.` : "The prefix and check digit were generated automatically from the recognized six-digit serial number.";
   $("candidateList").innerHTML = "";
   $("recognitionFields").style.display = "block";
   $("recognitionDate").value = item.date || today();
+  $("recognitionDate").disabled = Boolean(item.date);
+  $("recognitionUpdatedDate").value = today();
   $("recognitionNote").value = item.note || "";
   $("recognitionPanel").dataset.source = sourceName || "PaddleOCR";
   $("recognitionPanel").classList.add("show");
@@ -735,8 +775,9 @@ function commitRecognition(status) {
   const item = itemMap().get(state.currentRaw);
   if (!item || !["OK", "Repair", "Hold", "Reject"].includes(status)) return;
   item.status = status;
-  item.date = $("recognitionDate").value || today();
+  if (!item.date) item.date = $("recognitionDate").value || today();
   item.note = $("recognitionNote").value.trim();
+  item.updatedDate = today();
   item.updatedAt = timestamp();
   item.source = $("recognitionPanel").dataset.source || "PaddleOCR";
   saveState(); renderAll(); closeRecognition(); toast(`${formatRaw(item.raw)} saved as ${status}.`);
@@ -929,11 +970,148 @@ function downloadBlob(content, fileName, type) {
   anchor.href = url; anchor.download = fileName; document.body.appendChild(anchor); anchor.click(); anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 800);
 }
+
+function exportPayload() {
+  return {
+    app: "Tex Yard Inspection",
+    version: APP_VERSION,
+    exportedAt: timestamp(),
+    config: state.config,
+    orientation: state.orientation,
+    items: state.items.map((item) => migrateItem(item)),
+  };
+}
+function exportFileBase() {
+  return `Tex_Yard_Inspection_${state.config?.prefix || "Containers"}_${today()}`;
+}
+function safeEmbeddedJSON(value) {
+  return JSON.stringify(value).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+}
+function buildDataEmbeddedHTML() {
+  const data = safeEmbeddedJSON(exportPayload());
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="${RAL_3009}"><title>Tex Yard Inspection</title>
+<style>
+:root{--rust:${RAL_3009};--page:#eef3f6;--line:#d5dfe7;--text:#18222d;--muted:#687888;--ok:#178447;--repair:#1e73bd;--hold:#d97706;--reject:#ce3030;--okbg:#e8f7ef;--repairbg:#e8f3fd;--holdbg:#fff2de;--rejectbg:#ffebeb}*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.shell{max-width:1180px;margin:auto;padding:10px 10px 40px}.hero{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px;border:1px solid #ddc8cb;border-radius:17px;background:#fff}.hero h1{margin:0;color:var(--rust);font-size:clamp(30px,6vw,50px);line-height:1}.actions,.filters,.status-buttons{display:flex;flex-wrap:wrap;gap:8px}.btn{min-height:42px;padding:9px 12px;border:0;border-radius:10px;font-weight:760;cursor:pointer}.rust{color:#fff;background:var(--rust)}.dark{color:#fff;background:#273745}.light{color:#294052;background:#edf2f5}.card{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:15px;background:#fff}.stats{display:grid;grid-template-columns:repeat(7,minmax(80px,1fr));gap:8px}.stat{padding:10px;border:1px solid var(--line);border-radius:11px;text-align:center}.stat strong{display:block;font-size:21px}.stat span{color:var(--muted);font-size:12px}.filters{align-items:end}.field label{display:block;margin-bottom:5px;color:#4b5a68;font-size:12px;font-weight:750}.field input{min-height:40px;padding:8px 9px;border:1px solid #aebdca;border-radius:9px}.pills label{display:inline-flex;margin:3px;padding:7px 10px;border:1px solid var(--line);border-radius:99px;cursor:pointer}.pills input{position:absolute;opacity:0}.pills input:checked+label{color:#fff;background:#163b59}.table-wrap{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:11px}table{width:100%;min-width:760px;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:left}th{position:sticky;top:0;background:#edf2f6}.container{padding:0;border:0;color:var(--rust);background:none;font:800 15px ui-monospace,monospace;text-decoration:underline;cursor:pointer}.badge{display:inline-flex;min-width:70px;justify-content:center;padding:4px 8px;border-radius:99px;color:#fff;font-size:12px;font-weight:800}.badge.OK{background:var(--ok)}.badge.Repair{background:var(--repair)}.badge.Hold{background:var(--hold)}.badge.Reject{background:var(--reject)}.row-OK{background:var(--okbg)}.row-Repair{background:var(--repairbg)}.row-Hold{background:var(--holdbg)}.row-Reject{background:var(--rejectbg)}.mono{font-family:ui-monospace,monospace}.modal{display:none;position:fixed;inset:0;align-items:center;justify-content:center;padding:12px;background:rgba(0,0,0,.52)}.modal.show{display:flex}.modal-card{width:min(100%,560px);padding:16px;border-radius:15px;background:#fff}.number{margin:10px 0;padding:12px;border-radius:10px;color:var(--rust);background:#f7ecee;text-align:center;font:900 22px ui-monospace,monospace}.date-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.date-box{padding:10px;border:1px solid var(--line);border-radius:9px}.date-box span{display:block;color:var(--muted);font-size:12px}.date-box strong{display:block;margin-top:4px}.status-buttons button{flex:1 1 45%;color:#fff}.ok{background:var(--ok)}.repair{background:var(--repair)}.hold{background:var(--hold)}.reject{background:var(--reject)}textarea{width:100%;min-height:70px;margin-top:9px;padding:9px;border:1px solid #aebdca;border-radius:9px}.empty{padding:25px;color:var(--muted);text-align:center}@media(max-width:650px){.hero{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:repeat(2,1fr)}.date-grid{grid-template-columns:1fr}}
+</style></head><body><main class="shell"><header class="hero"><h1>Tex Yard Inspection</h1><div class="actions"><button id="saveBtn" class="btn rust">Save As</button><button id="shareBtn" class="btn dark">Share via WeChat</button></div></header><section class="card"><div id="stats" class="stats"></div></section><section class="card"><div class="filters"><div class="field"><label>From Date</label><input id="from" type="date"></div><div class="field"><label>To Date</label><input id="to" type="date"></div><div id="pills" class="pills"></div><button id="reset" class="btn light">Reset</button></div></section><section class="card"><div id="count" style="margin-bottom:9px;color:var(--muted)"></div><div class="table-wrap"><table><thead><tr><th>Serial No.</th><th>Container No.</th><th>Inspection Date</th><th>Latest Status</th><th>Updated Date</th><th>Note</th></tr></thead><tbody id="body"></tbody></table></div></section></main><section id="edit" class="modal"><div class="modal-card"><div style="display:flex;justify-content:space-between;gap:8px"><h2 style="margin:0">Update Container Status</h2><button id="close" class="btn light">Close</button></div><div id="number" class="number"></div><div class="date-grid"><div class="date-box"><span>Original Inspection Date</span><strong id="inspectionDate">—</strong></div><div class="date-box"><span>Updated Date</span><strong id="updatedDate">—</strong></div></div><textarea id="note" placeholder="Optional note"></textarea><p style="color:var(--muted);font-size:13px">Choose a status to save immediately. The original Inspection Date is retained.</p><div class="status-buttons"><button class="btn ok" data-status="OK">OK</button><button class="btn repair" data-status="Repair">Repair</button><button class="btn hold" data-status="Hold">Hold</button><button class="btn reject" data-status="Reject">Reject</button></div></div></section><script id="embeddedData" type="application/json">${data}</script><script>
+(function(){'use strict';var RUST='${RAL_3009}',data=JSON.parse(document.getElementById('embeddedData').textContent),state={config:data.config||null,items:Array.isArray(data.items)?data.items:[],editing:null};var statuses=['','OK','Repair','Hold','Reject'];function q(id){return document.getElementById(id)}function esc(v){return String(v==null?'':v).replace(/[&<>\"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]})}function td(){var d=new Date(),p=function(n){return String(n).padStart(2,'0')};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())}function disp(v){return String(v||'').replace(/-/g,'/')}function fmt(v){v=String(v||'').replace(/[^A-Z0-9]/g,'');return v.slice(0,4)+' '+v.slice(4,10)+' '+v.slice(10,11)}function badge(s){return s?'<span class="badge '+s+'">'+s+'</span>':''}function selected(){var out=[];statuses.forEach(function(s){var id=s||'Blank';if(q('st'+id).checked)out.push(s)});return out}function renderStats(){var c={OK:0,Repair:0,Hold:0,Reject:0};state.items.forEach(function(x){if(c[x.status]!=null)c[x.status]++});var done=c.OK+c.Repair+c.Hold+c.Reject,vals=[[state.items.length,'Total'],[done,'Inspected'],[state.items.length-done,'Uninspected'],[c.OK,'OK'],[c.Repair,'Repair'],[c.Hold,'Hold'],[c.Reject,'Reject']];q('stats').innerHTML=vals.map(function(x){return'<div class="stat"><strong>'+x[0]+'</strong><span>'+x[1]+'</span></div>'}).join('')}function render(){renderStats();var from=q('from').value,to=q('to').value,ss=selected(),list=state.items.filter(function(x){if(ss.indexOf(x.status)<0)return false;if(!x.status)return !from&&!to;if(from&&x.date<from)return false;if(to&&x.date>to)return false;return true});q('count').textContent=list.length+' container'+(list.length===1?'':'s');q('body').innerHTML=list.length?list.map(function(x){return'<tr class="'+(x.status?'row-'+x.status:'')+'"><td class="mono">'+esc(x.serial)+'</td><td><button class="container" data-raw="'+esc(x.raw)+'">'+fmt(x.raw)+'</button></td><td>'+disp(x.date)+'</td><td>'+badge(x.status)+'</td><td>'+disp(x.updatedDate)+'</td><td>'+esc(x.note)+'</td></tr>'}).join(''):'<tr><td colspan="6" class="empty">No containers match the current filter.</td></tr>'}function open(raw){var item=state.items.find(function(x){return x.raw===raw});if(!item)return;state.editing=item;q('number').textContent=fmt(item.raw);q('inspectionDate').textContent=disp(item.date)||'Not inspected';q('updatedDate').textContent=disp(item.updatedDate)||'—';q('note').value=item.note||'';q('edit').classList.add('show')}function saveStatus(status){var x=state.editing;if(!x)return;if(!x.date)x.date=td();x.status=status;x.note=q('note').value.trim();x.updatedDate=td();q('edit').classList.remove('show');state.editing=null;render()}function currentHTML(){var clone=document.documentElement.cloneNode(true);clone.querySelector('#embeddedData').textContent=JSON.stringify({app:'Tex Yard Inspection',version:data.version,exportedAt:new Date().toISOString(),config:state.config,items:state.items}).replace(/</g,'\\\\u003c');clone.querySelector('#edit').classList.remove('show');return'<!doctype html>\\n'+clone.outerHTML}function download(){var blob=new Blob([currentHTML()],{type:'text/html;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Tex_Yard_Inspection_'+(state.config&&state.config.prefix||'Containers')+'_'+td()+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},700)}async function share(){var html=currentHTML(),name='Tex_Yard_Inspection_'+(state.config&&state.config.prefix||'Containers')+'_'+td()+'.html',file=new File([html],name,{type:'text/html'});try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({title:'Tex Yard Inspection',text:'Choose WeChat to share this data-embedded HTML file.',files:[file]})}else download()}catch(e){if(e&&e.name!=='AbortError')download()}}q('pills').innerHTML=statuses.map(function(s){var id=s||'Blank',label=s||'Uninspected';return'<span><input id="st'+id+'" type="checkbox" checked><label for="st'+id+'">'+label+'</label></span>'}).join('');statuses.forEach(function(s){q('st'+(s||'Blank')).addEventListener('change',render)});q('from').addEventListener('change',render);q('to').addEventListener('change',render);q('reset').addEventListener('click',function(){q('from').value='';q('to').value='';statuses.forEach(function(s){q('st'+(s||'Blank')).checked=true});render()});document.addEventListener('click',function(e){var b=e.target.closest('[data-raw]');if(b)open(b.dataset.raw);var s=e.target.closest('[data-status]');if(s)saveStatus(s.dataset.status)});q('close').addEventListener('click',function(){q('edit').classList.remove('show');state.editing=null});q('saveBtn').addEventListener('click',download);q('shareBtn').addEventListener('click',share);render()})();
+</script></body></html>`;
+}
+function openSaveAs() { if (!state.items.length) { toast("There is no data to export."); return; } $("saveAsModal").classList.add("show"); }
+function closeSaveAs() { $("saveAsModal").classList.remove("show"); }
+function saveAsHTML() {
+  const html = buildDataEmbeddedHTML();
+  downloadBlob(html, `${exportFileBase()}.html`, "text/html;charset=utf-8");
+  closeSaveAs();
+}
+async function shareHTML() {
+  const html = buildDataEmbeddedHTML();
+  const fileName = `${exportFileBase()}.html`;
+  const file = new File([html], fileName, { type: "text/html" });
+  try {
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      await navigator.share({ title: "Tex Yard Inspection", text: "Choose WeChat to share this data-embedded HTML file.", files: [file] });
+      closeSaveAs();
+      return;
+    }
+    downloadBlob(file, fileName, "text/html");
+    toast("File sharing is unavailable in this browser. The HTML file was downloaded instead.", 4200);
+    closeSaveAs();
+  } catch (error) {
+    if (error?.name !== "AbortError") {
+      downloadBlob(file, fileName, "text/html");
+      toast("Sharing failed. The HTML file was downloaded instead.", 4200);
+      closeSaveAs();
+    }
+  }
+}
+function excelDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0);
+}
+async function exportExcel() {
+  if (!state.items.length) { toast("There is no data to export."); return; }
+  const button = $("exportExcelBtn");
+  button.disabled = true;
+  const previous = button.textContent;
+  button.textContent = "Creating Excel…";
+  try {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "Tex Yard Inspection";
+    workbook.title = "Tex Yard Inspection";
+    workbook.subject = "Container yard inspection records";
+    workbook.created = new Date();
+    const sheet = workbook.addWorksheet("Inspection Records", {
+      properties: { defaultRowHeight: 20 },
+      pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9, margins: { left: .3, right: .3, top: .5, bottom: .5, header: .2, footer: .2 } },
+      views: [{ state: "frozen", ySplit: 3 }],
+    });
+    sheet.mergeCells("A1:E1");
+    const title = sheet.getCell("A1");
+    title.value = "Tex Yard Inspection";
+    title.font = { name: "Arial", size: 20, bold: true, color: { argb: "FF5E2028" } };
+    title.alignment = { horizontal: "center", vertical: "middle" };
+    sheet.getRow(1).height = 34;
+    sheet.getRow(2).height = 8;
+    const headers = ["Serial No.", "Container No.", "Inspection Date", "Latest Status", "Updated Date"];
+    sheet.getRow(3).values = headers;
+    sheet.getRow(3).height = 26;
+    sheet.getRow(3).eachCell((cell) => {
+      cell.font = { name: "Arial", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF5E2028" } };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = { top: { style: "thin", color: { argb: "FF9C777C" } }, left: { style: "thin", color: { argb: "FF9C777C" } }, bottom: { style: "thin", color: { argb: "FF9C777C" } }, right: { style: "thin", color: { argb: "FF9C777C" } } };
+    });
+    const statusStyles = {
+      OK: { fill: "FF178447", font: "FFFFFFFF" },
+      Repair: { fill: "FF1E73BD", font: "FFFFFFFF" },
+      Hold: { fill: "FFD97706", font: "FFFFFFFF" },
+      Reject: { fill: "FFCE3030", font: "FFFFFFFF" },
+    };
+    state.items.forEach((item, index) => {
+      const row = sheet.addRow([item.serial, formatRaw(item.raw), excelDate(item.date), item.status || "", excelDate(item.updatedDate)]);
+      row.height = 22;
+      row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+        cell.font = { name: "Arial", size: 10, color: { argb: "FF1F2933" } };
+        cell.alignment = { horizontal: columnNumber === 2 ? "left" : "center", vertical: "middle" };
+        cell.border = { top: { style: "hair", color: { argb: "FFD5DFE7" } }, left: { style: "hair", color: { argb: "FFD5DFE7" } }, bottom: { style: "hair", color: { argb: "FFD5DFE7" } }, right: { style: "hair", color: { argb: "FFD5DFE7" } } };
+        if (index % 2 === 1) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF7F9FA" } };
+      });
+      row.getCell(1).numFmt = "@";
+      row.getCell(2).font = { name: "Consolas", size: 10, bold: true, color: { argb: "FF5E2028" } };
+      row.getCell(3).numFmt = "yyyy/mm/dd";
+      row.getCell(5).numFmt = "yyyy/mm/dd";
+      if (statusStyles[item.status]) {
+        const cell = row.getCell(4);
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: statusStyles[item.status].fill } };
+        cell.font = { name: "Arial", size: 10, bold: true, color: { argb: statusStyles[item.status].font } };
+      }
+    });
+    sheet.getColumn(1).width = 14;
+    sheet.getColumn(2).width = 24;
+    sheet.getColumn(3).width = 18;
+    sheet.getColumn(4).width = 17;
+    sheet.getColumn(5).width = 18;
+    sheet.autoFilter = { from: "A3", to: "E3" };
+    sheet.pageSetup.printTitlesRow = "1:3";
+    const buffer = await workbook.xlsx.writeBuffer();
+    downloadBlob(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `${exportFileBase()}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    toast("Excel file exported.");
+  } catch (error) {
+    console.error(error);
+    toast(`Excel export failed: ${error.message || error}`, 5000);
+  } finally {
+    button.disabled = false;
+    button.textContent = previous;
+  }
+}
+
 function csvCell(value) { return `"${String(value ?? "").replaceAll('"', '""')}"`; }
 function exportCSV() {
   if (!state.items.length) { toast("There is no data to export."); return; }
-  const rows = [["No.", "Container Number", "Prefix", "Serial Number", "Check Digit", "Status", "Inspection Date", "Note", "Updated", "Source"]];
-  state.items.forEach((item, index) => rows.push([index + 1, formatRaw(item.raw), item.raw.slice(0, 4), item.serial, item.raw.at(-1), item.status, displayDate(item.date), item.note, item.updatedAt, item.source]));
+  const rows = [["No.", "Container Number", "Prefix", "Serial Number", "Check Digit", "Latest Status", "Inspection Date", "Updated Date", "Note", "Updated Timestamp", "Source"]];
+  state.items.forEach((item, index) => rows.push([index + 1, formatRaw(item.raw), item.raw.slice(0, 4), item.serial, item.raw.at(-1), item.status, displayDate(item.date), displayDate(item.updatedDate), item.note, item.updatedAt, item.source]));
   const csv = "\uFEFF" + rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
   downloadBlob(csv, `Tex_Yard_Inspection_${state.config?.prefix || "Containers"}_${today()}.csv`, "text/csv;charset=utf-8");
 }
@@ -948,7 +1126,7 @@ function importBackup(file) {
     try {
       const data = JSON.parse(reader.result);
       if (!data.config || !Array.isArray(data.items)) throw new Error("Invalid backup format.");
-      state.config = data.config; state.items = data.items; state.orientation = data.orientation === "vertical" ? "vertical" : "horizontal";
+      state.config = data.config; state.items = data.items.map(migrateItem); state.orientation = data.orientation === "vertical" ? "vertical" : "horizontal";
       $("prefixInput").value = state.config.prefix || ""; $("startInput").value = state.config.start || ""; $("endInput").value = state.config.end || "";
       saveState(); renderAll(); toast("Backup imported.");
     } catch (error) { toast(error.message || "Backup import failed."); }
@@ -984,11 +1162,17 @@ function registerEvents() {
     const edit = event.target.closest("[data-edit]"); if (edit) openEdit(edit.dataset.edit);
     const candidate = event.target.closest("[data-candidate]"); if (candidate) showRecognition(candidate.dataset.candidate, $("recognitionPanel").dataset.source || "PaddleOCR");
     const status = event.target.closest("[data-status]"); if (status) commitRecognition(status.dataset.status);
+    const editStatus = event.target.closest("[data-edit-status]"); if (editStatus) applyEditStatus(editStatus.dataset.editStatus);
   });
   $("closeRecognitionBtn").addEventListener("click", closeRecognition); $("retryBtn").addEventListener("click", closeRecognition);
   $("viewLastDiagBtn").addEventListener("click", openDiagnostics);
-  $("closeEditBtn").addEventListener("click", closeEdit); $("saveEditBtn").addEventListener("click", () => saveEdit(false)); $("clearStatusBtn").addEventListener("click", () => saveEdit(true));
+  $("closeEditBtn").addEventListener("click", closeEdit);
   $("closeDiagnosticsBtn").addEventListener("click", closeDiagnostics); $("engineSelfTestBtn").addEventListener("click", runSelfTest); $("exportDiagBtn").addEventListener("click", exportDiagnostic); $("clearCacheBtn").addEventListener("click", clearCacheAndReload);
+  $("saveAsBtn").addEventListener("click", openSaveAs);
+  $("exportExcelBtn").addEventListener("click", exportExcel);
+  $("closeSaveAsBtn").addEventListener("click", closeSaveAs);
+  $("saveHtmlBtn").addEventListener("click", saveAsHTML);
+  $("shareHtmlBtn").addEventListener("click", shareHTML);
   $("exportCsvBtn").addEventListener("click", exportCSV); $("exportJsonBtn").addEventListener("click", exportBackup); $("importJsonInput").addEventListener("change", (event) => importBackup(event.target.files?.[0]));
 }
 
@@ -1001,7 +1185,7 @@ function initialize() {
   loadState();
   if (state.config) { $("prefixInput").value = state.config.prefix || ""; $("startInput").value = state.config.start || ""; $("endInput").value = state.config.end || ""; }
   registerEvents(); renderAll(); registerServiceWorker();
-  setRuntime(`<strong>Page script is running.</strong><br>Version ${APP_VERSION}. PaddleOCR recognizes text regions, but only six-digit serial numbers inside the generated range are used.`, "good");
+  setRuntime(`<strong>Page script is running.</strong><br>Version ${APP_VERSION}. Data-embedded HTML and styled Excel export are available. PaddleOCR recognizes text regions, but only six-digit serial numbers inside the generated range are used.`, "good");
 }
 
 initialize();

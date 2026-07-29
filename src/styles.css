@@ -276,3 +276,24 @@ details[open] .summary-label::before { content: "−"; }
   details.master > summary { display: none; }
   .master-body { display: block !important; }
 }
+
+/* Export controls and immutable inspection-date workflow */
+.hero { justify-content: space-between; gap: 16px; }
+.hero-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+.hero-actions .btn { min-width: 112px; }
+.record-date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field input:disabled { color: #4b5563; background: #f3f5f7; opacity: 1; cursor: not-allowed; }
+.date-readout { padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: #f8fafb; }
+.date-readout span { display: block; color: var(--muted); font-size: 12px; font-weight: 720; }
+.date-readout strong { display: block; margin-top: 5px; color: var(--text); font-size: 16px; }
+.modal-copy { margin: 11px 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.save-as-card { width: min(100%, 540px); }
+.save-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.save-actions .btn { min-height: 52px; }
+
+@media (max-width: 620px) {
+  .hero { align-items: flex-start; flex-direction: column; }
+  .hero-actions { width: 100%; justify-content: stretch; }
+  .hero-actions .btn { flex: 1 1 calc(50% - 5px); min-width: 0; }
+  .record-date-grid, .save-actions { grid-template-columns: 1fr; }
+}
