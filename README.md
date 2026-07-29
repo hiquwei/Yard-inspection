@@ -14,11 +14,12 @@ The camera captures the complete container number, but the application only uses
 - Six-digit serial-number extraction constrained to the generated range.
 - Automatic ISO 6346 check-digit calculation.
 - Statuses: OK, Repair, Hold, Reject; uninspected status remains blank.
-- Automatic inspection date.
+- Original Inspection Date is recorded on the first inspection and cannot be overwritten by later status changes.
+- Updated Date changes automatically whenever the latest status is changed.
 - Date and multi-status filters.
 - Full generated list is collapsed by default.
-- Click any container number to edit its status, date, and note.
-- CSV export and JSON backup/restore.
+- Click any container number to choose a new latest status; the original Inspection Date remains unchanged and Updated Date changes automatically.
+- Data-embedded HTML save/share, styled Excel export, CSV export, and JSON backup/restore.
 - Built-in PaddleOCR diagnostics.
 - Temporary camera images are released after recognition and are not stored in inspection records.
 
@@ -40,3 +41,10 @@ Upload the repository files, select **Settings → Pages → GitHub Actions**, a
 - The first PaddleOCR initialization is slower because models are loaded into browser memory.
 - GitHub Pages does not provide COOP/COEP headers, so this build uses one WebAssembly thread for broad iPhone compatibility.
 - Browser records are stored in local storage. Export backups regularly.
+
+## Data export and inspection-date rules
+
+- `Save As` creates a data-embedded standalone HTML file.
+- `Share via WeChat` opens the system share sheet with the same HTML file.
+- `Export Excel` creates a styled `.xlsx` workbook with Serial No., Container No., Inspection Date, Latest Status and Updated Date.
+- The original Inspection Date is written only when a container is inspected for the first time. Later status changes update Updated Date but do not overwrite Inspection Date.

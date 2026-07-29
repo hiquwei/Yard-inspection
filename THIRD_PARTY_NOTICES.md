@@ -6,6 +6,7 @@ This project uses the following open-source software and model assets:
 - PaddleOCR PP-OCRv5 mobile text-detection and text-recognition ONNX model archives, provided by PaddlePaddle.
 - ONNX Runtime Web, MIT License.
 - OpenCV.js through `@techstark/opencv-js`, Apache License 2.0.
+- ExcelJS, MIT License.
 - Vite, MIT License.
 
 The build process downloads the following official PaddleOCR model assets:

@@ -1,0 +1,13 @@
+Tex Yard Inspection PaddleOCR v2 - Files to replace in the existing GitHub repository
+
+package.json
+src/main.js
+src/styles.css
+public/sw.js
+public/app-version.json
+README.md
+THIRD_PARTY_NOTICES.md
+UPDATE_GUIDE_CN.md
+
+Upload each file to the same relative path in the repository and allow GitHub to replace the existing file.
+The existing .github/workflows/main.yml and build scripts do not need to be changed.
