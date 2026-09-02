@@ -1,0 +1,62 @@
+name: Temporary Carrier UnitLookup Source Inspection 2
+
+on:
+  push:
+    branches:
+      - temp/carrier-unitlookup-code2-20260902
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone and search ignored Salesforce metadata
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 https://github.com/Sharex508/Agentnattqa.git source
+          ROOT=source/data/repos/local/natt-qa/force-app/main/default
+          mkdir -p output/files
+
+          rg --no-ignore -n -i \
+            'UnitLookup|CONTAINER_PID__c|CONTAINER_Model_Number__c|Parts Identification|Product Matrix|Unit Matrix|PID Number|PID #|PID__c|NT[ -]?[0-9]{3,5}|69NT40' \
+            "$ROOT" > output/relevant_hits.txt || true
+
+          rg --no-ignore -l -i \
+            'UnitLookup|CONTAINER_PID__c|CONTAINER_Model_Number__c|Parts Identification|Product Matrix|Unit Matrix|PID Number|PID #|PID__c|NT[ -]?[0-9]{3,5}|69NT40' \
+            "$ROOT" | sort > output/relevant_files.txt || true
+
+          while IFS= read -r f; do
+            rel="${f#$ROOT/}"
+            mkdir -p "output/files/$(dirname "$rel")"
+            cp "$f" "output/files/$rel"
+          done < output/relevant_files.txt
+
+          # Focused searches for SOQL/API implementation and UnitLookup site components.
+          rg --no-ignore -n -i \
+            'SELECT.{0,500}(PID|Model)|FROM.{0,100}(PID|Model)|@AuraEnabled|@RestResource|HttpRequest|NamedCredential|callout:|model.*pid|pid.*model' \
+            "$ROOT/classes" "$ROOT/lwc" "$ROOT/aura" "$ROOT/pages" "$ROOT/components" "$ROOT/flows" \
+            > output/executable_hits.txt || true
+
+          find "$ROOT/experiences/UnitLookup1" -type f -print0 | xargs -0 -I{} sh -c 'mkdir -p "output/unitlookup_experience/$(dirname "${1#'$ROOT'/experiences/UnitLookup1/}")"; cp "$1" "output/unitlookup_experience/${1#'$ROOT'/experiences/UnitLookup1/}"' sh {} || true
+          cp "$ROOT/sites/UnitLookup.site-meta.xml" output/ || true
+          cp "$ROOT/networks/UnitLookup.network-meta.xml" output/ || true
+          cp "$ROOT/siteDotComSites/UnitLookup1.site" output/ || true
+
+          wc -l output/*.txt || true
+          sed -n '1,1200p' output/relevant_hits.txt || true
+
+      - name: Upload inspection results
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-unitlookup-source-inspection2
+          path: output/
+          retention-days: 1
+          compression-level: 6
+
+      - name: Remove temporary branch
+        if: always()
+        shell: bash
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
