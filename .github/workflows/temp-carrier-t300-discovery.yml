@@ -1,0 +1,167 @@
+name: Temporary Carrier T300 Discovery
+
+on:
+  push:
+    branches:
+      - temp/carrier-t300-discovery-20260902
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discover public and archived Carrier T-300 resources
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p discovery
+          cat > discovery/discover.py <<'PY'
+          import json, re, time, html, urllib.parse, urllib.request, ssl, os
+          from collections import deque
+
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36'
+          ctx=ssl.create_default_context()
+
+          def fetch(url, timeout=35):
+              req=urllib.request.Request(url, headers={'User-Agent':UA,'Accept':'*/*'})
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout, context=ctx) as r:
+                      b=r.read(8_000_000)
+                      return {'ok':True,'url':r.geturl(),'status':getattr(r,'status',200),'headers':dict(r.headers),'body':b}
+              except Exception as e:
+                  return {'ok':False,'url':url,'error':repr(e),'body':b''}
+
+          logs=[]
+          found=set()
+          blobs=[]
+          def save_result(tag,u,res):
+              logs.append({'tag':tag,'requested':u,'ok':res.get('ok'),'final':res.get('url'),'status':res.get('status'),'error':res.get('error'),'len':len(res.get('body',b'')),'ctype':res.get('headers',{}).get('Content-Type')})
+              if res.get('ok'):
+                  text=res['body'].decode('utf-8','replace')
+                  if re.search(r'(?i)t.?300|product.{0,20}matrix|container.{0,20}matrix|unit.{0,20}matrix|parts identification|\bPID\b|unitlookup', text):
+                      blobs.append('\n\n===== '+tag+' '+res.get('url',u)+' =====\n'+text[:2_000_000])
+                  for m in re.finditer(r'https?://[^\s<>"\']+', text):
+                      x=html.unescape(m.group(0)).rstrip('.,);]')
+                      if re.search(r'(?i)t.?300|matrix|unitlookup|productlookup|PID',x): found.add(x)
+                  for m in re.finditer(r'(?:href|src)=["\']([^"\']+)', text, re.I):
+                      x=urllib.parse.urljoin(res.get('url',u),html.unescape(m.group(1)))
+                      if re.search(r'(?i)t.?300|matrix|unitlookup|productlookup|PID',x): found.add(x)
+              return res
+
+          # Known/current site entry points and likely sitemaps.
+          seeds=[
+            'https://www.transcentral.carrier.com/',
+            'https://www.transcentral.carrier.com/robots.txt',
+            'https://www.transcentral.carrier.com/sitemap.xml',
+            'https://www.transcentral.carrier.com/CPGTechPubs/',
+            'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/',
+            'https://www.carrier.com/container-refrigeration/en/worldwide/sitemap.xml',
+            'https://www.carrier.com/us/en/cold-chain/container/sitemap.xml',
+            'https://www.container.carrier.com/',
+            'http://www.container.carrier.com/',
+          ]
+          for u in seeds: save_result('seed',u,fetch(u))
+
+          # Search engines (RSS/HTML) for exact legacy names and PID examples.
+          queries=[
+            '"Container Product Matrix" Carrier T-300',
+            '"Carrier Transicold Container Unit Matrix"',
+            '"Carrier Transicold Container Identification Matrix"',
+            'site:transcentral.carrier.com T-300 matrix',
+            'site:container.carrier.com matrix PID NT2300',
+            '"NT2300" Carrier Transicold',
+            '"NT-2300" Carrier Transicold',
+            '"69NT40-541-305" "NT"',
+          ]
+          for q in queries:
+              for base in ['https://www.bing.com/search?format=rss&q=', 'https://html.duckduckgo.com/html/?q=']:
+                  u=base+urllib.parse.quote(q)
+                  save_result('search:'+q,u,fetch(u))
+                  time.sleep(.3)
+
+          # Wayback CDX targeted patterns.
+          hosts=['www.transcentral.carrier.com','transcentral.carrier.com','www.container.carrier.com','container.carrier.com','www.carrier.transicold.com','carrier.transicold.com','www.carrier.refrigeration.com','carrier.refrigeration.com']
+          patterns=['*t300*','*t-300*','*matrix*','*unitlookup*','*productlookup*','*pid*']
+          for h in hosts:
+              for pat in patterns:
+                  cdx='https://web.archive.org/cdx/search/cdx?'+urllib.parse.urlencode({
+                      'url':h+'/'+pat,'output':'json','fl':'timestamp,original,statuscode,mimetype,length,digest','filter':'statuscode:200','collapse':'urlkey','limit':'5000'
+                  })
+                  res=save_result('cdx:'+h+'/'+pat,cdx,fetch(cdx,60))
+                  if res.get('ok'):
+                      try:
+                          arr=json.loads(res['body'])
+                          for row in arr[1:]:
+                              if len(row)>1: found.add(row[1])
+                      except Exception: pass
+                  time.sleep(.15)
+
+          # Broad CDX query on likely legacy directories, filter locally.
+          broad=[
+            'https://web.archive.org/cdx/search/cdx?url=www.transcentral.carrier.com/CPGTechPubs/*&output=json&fl=timestamp,original,statuscode,mimetype,length,digest&filter=statuscode:200&collapse=urlkey&limit=50000',
+            'https://web.archive.org/cdx/search/cdx?url=www.container.carrier.com/*&output=json&fl=timestamp,original,statuscode,mimetype,length,digest&filter=statuscode:200&collapse=urlkey&limit=50000',
+          ]
+          for u in broad:
+              res=save_result('cdx-broad',u,fetch(u,90))
+              if res.get('ok'):
+                  try:
+                      arr=json.loads(res['body'])
+                      for row in arr[1:]:
+                          if len(row)>1 and re.search(r'(?i)t.?300|matrix|unitlookup|productlookup|\bpid\b',row[1]): found.add(row[1])
+                  except Exception: pass
+
+          # Probe likely direct paths.
+          bases=['https://www.transcentral.carrier.com/CPGTechPubs/ops_service/','https://www.transcentral.carrier.com/CPGTechPubs/','https://www.container.carrier.com/']
+          paths=[
+            't300/','t300/t300/','t300/BookCover/BookCover.htm','t300/t300/BookCover/BookCover.htm',
+            't-300/','t-300/t-300/','T-300/','T300/','product_matrix/','productmatrix/','ProductMatrix/',
+            'container_product_matrix/','ContainerProductMatrix/','unit_matrix/','UnitMatrix/','unitlookup/','UnitLookup/',
+            'matrix/','Matrix/','T300.pdf','T-300.pdf','t300.pdf','t-300.pdf'
+          ]
+          for b in bases:
+              for p in paths:
+                  u=urllib.parse.urljoin(b,p)
+                  res=save_result('probe',u,fetch(u,20))
+                  if res.get('ok') and res.get('status')==200 and len(res.get('body',b''))>100: found.add(res.get('url',u))
+
+          # Crawl only same-host links from successfully retrieved Carrier HTML, bounded.
+          starts=['https://www.transcentral.carrier.com/','https://www.transcentral.carrier.com/CPGTechPubs/ops_service/']
+          seen=set(); q=deque((u,0) for u in starts)
+          while q and len(seen)<400:
+              u,depth=q.popleft()
+              if u in seen or depth>3: continue
+              seen.add(u)
+              res=fetch(u,20)
+              logs.append({'tag':'crawl','requested':u,'ok':res.get('ok'),'final':res.get('url'),'status':res.get('status'),'error':res.get('error'),'len':len(res.get('body',b'')),'ctype':res.get('headers',{}).get('Content-Type')})
+              if not res.get('ok') or 'text/html' not in (res.get('headers',{}).get('Content-Type','').lower()): continue
+              text=res['body'].decode('utf-8','replace')
+              for m in re.finditer(r'href=["\']([^"\']+)',text,re.I):
+                  x=urllib.parse.urljoin(res.get('url',u),html.unescape(m.group(1))).split('#')[0]
+                  pu=urllib.parse.urlparse(x)
+                  if pu.hostname and pu.hostname.lower().endswith(('transcentral.carrier.com','container.carrier.com')):
+                      if re.search(r'(?i)t.?300|matrix|lookup|pid',x): found.add(x)
+                      if depth<3 and not re.search(r'(?i)\.(pdf|zip|jpg|jpeg|png|gif|css|js)$',pu.path): q.append((x,depth+1))
+
+          os.makedirs('discovery',exist_ok=True)
+          open('discovery/logs.json','w').write(json.dumps(logs,indent=2,ensure_ascii=False))
+          open('discovery/found_urls.txt','w').write('\n'.join(sorted(found)))
+          open('discovery/relevant_pages.txt','w').write('\n'.join(blobs))
+          print('found urls',len(found),'logs',len(logs),'blobs',len(blobs))
+          print('\n'.join(sorted(found)[:300]))
+          PY
+          python discovery/discover.py | tee discovery/console.txt
+
+      - name: Upload discovery results
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-t300-discovery
+          path: discovery/
+          retention-days: 1
+          compression-level: 6
+
+      - name: Remove temporary branch
+        if: always()
+        shell: bash
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
