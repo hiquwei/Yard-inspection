@@ -1,0 +1,70 @@
+name: Temporary Carrier Common Crawl Domain Inventory
+
+on:
+  push:
+    branches:
+      - temp/carrier-cc-inventory-20260902
+
+permissions:
+  contents: write
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inventory historical Carrier domains in Common Crawl
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p output
+          cat > output/inventory.py <<'PY'
+          import urllib.request,urllib.parse,json,re,ssl,os,time
+          UA='Mozilla/5.0';ctx=ssl.create_default_context()
+          def get(u,t=60):
+            req=urllib.request.Request(u,headers={'User-Agent':UA})
+            with urllib.request.urlopen(req,timeout=t,context=ctx) as r:return r.read()
+          coll=json.loads(get('https://index.commoncrawl.org/collinfo.json'))
+          indexes=[]
+          for x in coll:
+            m=re.search(r'(20\d{2})',x['id'])
+            if m and 2008<=int(m.group(1))<=2020:indexes.append(x['id'])
+          hosts=['www.carrier.refrigeration.com','carrier.refrigeration.com','www.container.carrier.com','container.carrier.com','www.transcentral.carrier.com','transcentral.carrier.com']
+          rows=[];errors=[]
+          for idx in indexes:
+            for host in hosts:
+              params={'url':host+'/*','output':'json','filter':'status:200','collapse':'urlkey','pageSize':'5000'}
+              u=f'https://index.commoncrawl.org/{idx}-index?'+urllib.parse.urlencode(params)
+              try:
+                b=get(u,90).decode('utf-8','replace')
+                for line in b.splitlines():
+                  try:r=json.loads(line)
+                  except:continue
+                  r['_index']=idx;rows.append(r)
+              except Exception as e:errors.append({'idx':idx,'host':host,'error':repr(e)})
+          # dedupe and rank interesting URLs
+          uniq={}
+          for r in rows:uniq[(r.get('url'),r.get('digest'))]=r
+          rows=list(uniq.values())
+          kws=re.compile(r'(?i)t.?300|matrix|unit.?lookup|product.?lookup|config|identif|pid|publication|manual|techpub|service|parts')
+          interesting=[r for r in rows if kws.search(r.get('url',''))]
+          interesting.sort(key=lambda r:(r.get('url',''),r.get('_index','')))
+          open('output/all_urls.tsv','w').write('\n'.join(f"{r.get('_index')}\t{r.get('timestamp')}\t{r.get('mime')}\t{r.get('url')}\t{r.get('filename')}\t{r.get('offset')}\t{r.get('length')}" for r in rows))
+          open('output/interesting_urls.tsv','w').write('\n'.join(f"{r.get('_index')}\t{r.get('timestamp')}\t{r.get('mime')}\t{r.get('url')}\t{r.get('filename')}\t{r.get('offset')}\t{r.get('length')}" for r in interesting))
+          open('output/interesting.json','w').write(json.dumps(interesting,indent=2))
+          open('output/errors.json','w').write(json.dumps(errors,indent=2))
+          print('indexes',len(indexes),'rows',len(rows),'interesting',len(interesting),'errors',len(errors))
+          print(open('output/interesting_urls.tsv').read()[:120000])
+          PY
+          python output/inventory.py | tee output/console.txt
+
+      - name: Upload inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-cc-domain-inventory
+          path: output/
+          retention-days: 1
+
+      - name: Remove temporary branch
+        if: always()
+        shell: bash
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
