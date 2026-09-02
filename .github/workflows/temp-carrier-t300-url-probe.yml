@@ -1,0 +1,109 @@
+name: Temporary Carrier T300 URL Probe
+
+on:
+  push:
+    branches:
+      - temp/carrier-t300-url-probe-20260902
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe official and historical T-300 locations
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p results/downloads
+          cat > results/probe.py <<'PY'
+          import concurrent.futures, urllib.request, urllib.error, ssl, os, re, json, hashlib, urllib.parse
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36'
+          ctx=ssl.create_default_context()
+          urls=[]
+          # Exhaust likely Shareddocs bucket prefixes.
+          names=[
+            'T-300.pdf','T300.pdf','t-300.pdf','t300.pdf','T-300-REV-B.pdf','T300-REV-B.pdf',
+            'T-300_REV_B.pdf','T-300RevB.pdf','T-300-rev-b.pdf','T-300.zip','T300.zip',
+            't300/T-300.pdf','T300/T-300.pdf','t-300/T-300.pdf','T-300/T-300.pdf'
+          ]
+          for i in range(256):
+              p=f'{i:02X}'
+              for n in names:
+                  urls.append(f'https://www.shareddocs.com/hvac/docs/2000/Public/{p}/{n}')
+          # Likely legacy paths on Carrier sites.
+          hosts=['https://www.transcentral.carrier.com','http://www.transcentral.carrier.com','https://www.container.carrier.com','http://www.container.carrier.com','https://www.carrier.refrigeration.com','http://www.carrier.refrigeration.com']
+          paths=[
+            '/CPGTechPubs/ops_service/t300/t300/BookCover/BookCover.htm',
+            '/CPGTechPubs/ops_service/t300/t300/BookCover/BookCover.html',
+            '/CPGTechPubs/ops_service/t300/BookCover/BookCover.htm',
+            '/CPGTechPubs/ops_service/T-300/T-300/BookCover/BookCover.htm',
+            '/CPGTechPubs/ops_service/T300/T300/BookCover/BookCover.htm',
+            '/CPGTechPubs/ops_service/t-300/t-300/BookCover/BookCover.htm',
+            '/CPGTechPubs/ops_service/t300/', '/CPGTechPubs/ops_service/T-300/',
+            '/CPGTechPubs/ops_service/t300.pdf','/CPGTechPubs/ops_service/T-300.pdf',
+            '/CPGTechPubs/t300.pdf','/CPGTechPubs/T-300.pdf',
+            '/t300/','/T-300/','/t300.pdf','/T-300.pdf',
+            '/productmatrix/','/ProductMatrix/','/product_matrix/','/unitmatrix/','/UnitMatrix/',
+            '/UnitLookup/','/unitlookup/','/matrix/','/Matrix/'
+          ]
+          for h in hosts:
+              for p in paths: urls.append(h+p)
+          urls=list(dict.fromkeys(urls))
+
+          def check(url):
+              req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':'*/*','Range':'bytes=0-1048575'})
+              try:
+                  with urllib.request.urlopen(req,timeout=12,context=ctx) as r:
+                      b=r.read(1_048_576)
+                      ctype=r.headers.get('Content-Type','')
+                      final=r.geturl(); status=getattr(r,'status',200)
+                      interesting = status in (200,206) and (len(b)>500 or 'pdf' in ctype.lower() or 'zip' in ctype.lower())
+                      return {'requested':url,'final':final,'status':status,'ctype':ctype,'length':len(b),'headers':dict(r.headers),'interesting':interesting,'body':b if interesting else b''}
+              except urllib.error.HTTPError as e:
+                  return {'requested':url,'status':e.code,'error':str(e),'interesting':False,'body':b''}
+              except Exception as e:
+                  return {'requested':url,'status':None,'error':repr(e),'interesting':False,'body':b''}
+
+          allres=[]; hits=[]
+          with concurrent.futures.ThreadPoolExecutor(max_workers=45) as ex:
+              for res in ex.map(check,urls):
+                  body=res.pop('body',b'')
+                  allres.append(res)
+                  if res.get('interesting'):
+                      text=body.decode('utf-8','replace')
+                      magic=body[:8]
+                      relevant=(magic.startswith(b'%PDF') or magic.startswith(b'PK') or re.search(r'(?i)carrier|transicold|container.{0,30}(matrix|product)|T.?300|parts identification|\bPID\b',text))
+                      if relevant:
+                          sha=hashlib.sha256(body).hexdigest()[:16]
+                          ext='.bin'
+                          if magic.startswith(b'%PDF'): ext='.pdf'
+                          elif magic.startswith(b'PK'): ext='.zip'
+                          elif 'html' in res.get('ctype','').lower(): ext='.html'
+                          fn=f'results/downloads/{len(hits):04d}_{sha}{ext}'
+                          open(fn,'wb').write(body)
+                          res2=dict(res);res2['saved']=fn;res2['sha_first_mb']=sha;res2['sample']=text[:1000]
+                          hits.append(res2)
+          open('results/all_results.json','w').write(json.dumps(allres,indent=2,ensure_ascii=False))
+          open('results/hits.json','w').write(json.dumps(hits,indent=2,ensure_ascii=False))
+          with open('results/hits.txt','w') as f:
+              for h in hits:
+                  f.write(json.dumps(h,ensure_ascii=False)+'\n')
+          print('probed',len(urls),'hits',len(hits))
+          for h in hits: print(h['status'],h.get('ctype'),h.get('length'),h['requested'],'->',h.get('final'),'saved',h.get('saved'))
+          PY
+          python results/probe.py | tee results/console.txt
+
+      - name: Upload probe results
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-t300-url-probe-results
+          path: results/
+          retention-days: 1
+          compression-level: 6
+
+      - name: Remove temporary branch
+        if: always()
+        shell: bash
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
