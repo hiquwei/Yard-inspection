@@ -1,0 +1,361 @@
+name: Temporary Carrier PID Research V2
+on:
+  push:
+    branches: [temp/carrier-pid-research-v2-20260902]
+permissions:
+  contents: write
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: temp/carrier-pid-research-v2-20260902
+      - name: Install research dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils p7zip-full >/dev/null
+          python -m pip install --quiet requests beautifulsoup4 lxml openpyxl pandas pymupdf py7zr
+      - name: Discover and parse Carrier T-300 sources
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/research.py <<'PY'
+          import os,re,io,sys,json,time,hashlib,zipfile,tarfile,gzip,subprocess,urllib.parse,html as htmllib
+          from pathlib import Path
+          from collections import defaultdict, deque
+          import requests
+          from bs4 import BeautifulSoup
+          import fitz
+          import pandas as pd
+          from openpyxl import Workbook
+          
+          OUT=Path('carrier_pid_research_v2')
+          RAW=OUT/'raw'
+          EXT=OUT/'extracted'
+          OUT.mkdir(exist_ok=True); RAW.mkdir(exist_ok=True); EXT.mkdir(exist_ok=True)
+          S=requests.Session()
+          S.headers.update({'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36 CarrierTechnicalResearch/1.0'})
+          report=[]; candidates=[]; fetched=[]; errors=[]; link_evidence=[]
+          
+          def log(x):
+              x=str(x); print(x,flush=True); report.append(x)
+          def add_url(u,why=''):
+              if not u: return
+              u=htmllib.unescape(u.strip().strip('"\''))
+              if u.startswith('//'): u='https:'+u
+              if not u.startswith(('http://','https://')): return
+              u=u.replace(' ','%20')
+              if u not in [x[0] for x in candidates]: candidates.append((u,why))
+          def get(u,timeout=30,allow_redirects=True):
+              try:
+                  r=S.get(u,timeout=timeout,allow_redirects=allow_redirects)
+                  return r
+              except Exception as e:
+                  errors.append({'url':u,'error':repr(e)})
+                  return None
+          def safe_name(u,ct=''):
+              p=urllib.parse.urlparse(u)
+              nm=Path(urllib.parse.unquote(p.path)).name or 'index.html'
+              if '.' not in nm:
+                  if 'pdf' in ct: nm+='.pdf'
+                  else: nm+='.html'
+              return hashlib.sha1(u.encode()).hexdigest()[:12]+'_'+re.sub(r'[^A-Za-z0-9._-]','_',nm)[:120]
+          
+          # Direct starting pages and likely historical paths.
+          seeds=[
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/techline/Techline/2011-December/2011-December.htm',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/techline/Techline/TL004-2025/TL004-2025.htm',
+          'https://www.carrier.com/us/en/cold-chain/container/data-tools/',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/t300/t300.htm',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/t300/index.htm',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/t300/BookCover/BookCover.htm',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/t300_productmatrix/t300_productmatrix/BookCover/BookCover.htm',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/t300_product_matrix/t300_product_matrix/BookCover/BookCover.htm',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/product_matrix/index.htm',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/T-300.pdf',
+          'https://www.transcentral.carrier.com/CPGTechPubs/ops_service/t300/T-300.pdf',
+          'https://www.shareddocs.com/hvac/docs/2000/Public/00/T-300.pdf'
+          ]
+          for u in seeds:add_url(u,'seed')
+          
+          # Search engines: discover exact URLs, mirrors, files, and indexed snippets.
+          queries=[
+          '"T-300" "Container Product Matrix" Carrier',
+          '"Product Matrix T-300" Carrier Transicold',
+          'site:transcentral.carrier.com/CPGTechPubs/ops_service T-300',
+          'site:transcentral.carrier.com/CPGTechPubs/ops_service "Product Matrix"',
+          'site:shareddocs.com/hvac/docs/2000/Public "T-300"',
+          'filetype:pdf "T-300" "Carrier Transicold"',
+          '"NT2300" "69NT40"',
+          '"NT2808" "69NT40"',
+          '"NT2999" "69NT40"',
+          '"NT2300" Carrier Transicold',
+          '"NT2999" Carrier Transicold'
+          ]
+          for q in queries:
+              for engine,url in [
+                  ('bing','https://www.bing.com/search?q='+urllib.parse.quote(q)+'&count=50'),
+                  ('ddg','https://html.duckduckgo.com/html/?q='+urllib.parse.quote(q))]:
+                  r=get(url,40)
+                  if not r: continue
+                  (RAW/f'search_{engine}_{hashlib.sha1(q.encode()).hexdigest()[:10]}.html').write_bytes(r.content)
+                  soup=BeautifulSoup(r.text,'lxml')
+                  for a in soup.select('a[href]'):
+                      href=a.get('href','')
+                      if engine=='ddg' and 'uddg=' in href:
+                          try: href=urllib.parse.parse_qs(urllib.parse.urlparse(href).query).get('uddg',[href])[0]
+                          except: pass
+                      if any(k in href.lower() for k in ['carrier','transcentral','shareddocs','archive.org','t-300','t300']):
+                          add_url(href,f'{engine}:{q}')
+                  # retain snippets because some exact PID/model pairs may only survive in indexes
+                  txt=' '.join(soup.stripped_strings)
+                  for m in re.finditer(r'NT2[3-9]\d\d',txt,re.I):
+                      link_evidence.append({'source':url,'query':q,'snippet':txt[max(0,m.start()-250):m.end()+500]})
+          
+          # Internet Archive CDX queries.
+          cdx_queries=[
+          'https://web.archive.org/cdx/search/cdx?url=www.transcentral.carrier.com/CPGTechPubs/ops_service/*&output=json&fl=timestamp,original,statuscode,mimetype,digest&filter=statuscode:200&filter=original:.*[Tt]-?300.*&collapse=urlkey&limit=10000',
+          'https://web.archive.org/cdx/search/cdx?url=transcentral.carrier.com/CPGTechPubs/ops_service/*&output=json&fl=timestamp,original,statuscode,mimetype,digest&filter=statuscode:200&filter=original:.*[Tt]-?300.*&collapse=urlkey&limit=10000',
+          'https://web.archive.org/cdx/search/cdx?url=www.transcentral.carrier.com/CPGTechPubs/ops_service/*&output=json&fl=timestamp,original,statuscode,mimetype,digest&filter=statuscode:200&filter=original:.*[Mm]atrix.*&collapse=urlkey&limit=10000',
+          'https://web.archive.org/cdx/search/cdx?url=transcentral.carrier.com/CPGTechPubs/ops_service/*&output=json&fl=timestamp,original,statuscode,mimetype,digest&filter=statuscode:200&filter=original:.*[Mm]atrix.*&collapse=urlkey&limit=10000',
+          'https://web.archive.org/cdx/search/cdx?url=www.transcentral.carrier.com/*&output=json&fl=timestamp,original,statuscode,mimetype,digest&filter=statuscode:200&filter=original:.*[Pp]roduct.*[Mm]atrix.*&collapse=urlkey&limit=10000'
+          ]
+          for cu in cdx_queries:
+              r=get(cu,90)
+              if not r: continue
+              try:
+                  data=r.json();
+                  if data and isinstance(data,list):
+                      head=data[0]
+                      for row in data[1:]:
+                          d=dict(zip(head,row)); orig=d.get('original'); ts=d.get('timestamp')
+                          add_url(orig,'wayback-original')
+                          if orig and ts:
+                              add_url(f'https://web.archive.org/web/{ts}id_/{orig}','wayback-snapshot')
+              except Exception as e: errors.append({'url':cu,'error':'CDX '+repr(e),'sample':r.text[:500]})
+          
+          # Archive.org metadata search.
+          aq='https://archive.org/advancedsearch.php?q='+urllib.parse.quote('(title:(Carrier T-300) OR description:(Carrier Product Matrix) OR identifier:(carrier t300))')+'&fl[]=identifier,title,description&rows=100&page=1&output=json'
+          r=get(aq,60)
+          if r:
+              try:
+                  for d in r.json().get('response',{}).get('docs',[]):
+                      ident=d.get('identifier')
+                      if ident: add_url('https://archive.org/download/'+ident+'/', 'archive-item')
+              except: pass
+          
+          # Parse the seed TechLine page first to preserve the actual Product Matrix hyperlink.
+          for u in list(seeds[:3]):
+              r=get(u,45)
+              if not r: continue
+              ct=r.headers.get('content-type','').lower()
+              fn=RAW/safe_name(r.url,ct); fn.write_bytes(r.content)
+              fetched.append({'url':u,'final':r.url,'status':r.status_code,'type':ct,'size':len(r.content),'file':str(fn),'why':'seed-preparse'})
+              if 'html' in ct or b'<html' in r.content[:1000].lower():
+                  soup=BeautifulSoup(r.content,'lxml')
+                  for a in soup.select('a[href]'):
+                      text=' '.join(a.stripped_strings)
+                      href=urllib.parse.urljoin(r.url,a.get('href'))
+                      if any(x in (text+' '+href).lower() for x in ['t-300','t300','product matrix','matrix']):
+                          add_url(href,'actual-link-from:'+u)
+                          link_evidence.append({'source':u,'anchor':text,'url':href})
+          
+          # Fetch candidates. Follow links near the T300/matrix namespace and all actual-link pages.
+          q=deque(candidates); seen=set(); max_fetch=2500
+          while q and len(seen)<max_fetch:
+              u,why=q.popleft()
+              if u in seen: continue
+              seen.add(u)
+              r=get(u,50)
+              if not r: continue
+              ct=r.headers.get('content-type','').lower(); final=r.url
+              rec={'url':u,'final':final,'status':r.status_code,'type':ct,'size':len(r.content),'why':why}
+              if r.status_code!=200 or not r.content:
+                  fetched.append(rec); continue
+              if len(r.content)>120_000_000:
+                  rec['skipped']='too-large'; fetched.append(rec); continue
+              fn=RAW/safe_name(final,ct); fn.write_bytes(r.content); rec['file']=str(fn); fetched.append(rec)
+              low=(u+' '+final+' '+why).lower()
+              is_html=('html' in ct or b'<html' in r.content[:2000].lower())
+              if is_html:
+                  try:
+                      soup=BeautifulSoup(r.content,'lxml')
+                      for a in soup.select('a[href],script[src],link[href],iframe[src],frame[src],object[data],embed[src]'):
+                          href=a.get('href') or a.get('src') or a.get('data')
+                          if not href: continue
+                          nu=urllib.parse.urljoin(final,href)
+                          nlow=nu.lower()
+                          # follow same Carrier/Wayback directory, plus all T300/matrix-related assets
+                          same=urllib.parse.urlparse(nu).netloc==urllib.parse.urlparse(final).netloc
+                          relevant=any(k in nlow for k in ['t300','t-300','matrix','pid','model','product'])
+                          carrier=any(k in nlow for k in ['transcentral.carrier.com','shareddocs.com','web.archive.org/web/'])
+                          if (same and (relevant or any(k in low for k in ['t300','t-300','matrix','actual-link']))) or (relevant and carrier):
+                              if nu not in seen: q.append((nu,'crawl-from:'+final))
+                  except Exception as e: errors.append({'url':u,'error':'parse '+repr(e)})
+          
+          # Recursively extract archives and PDFs / office text.
+          def extract_archive(p,dest):
+              try:
+                  dest.mkdir(parents=True,exist_ok=True)
+                  if zipfile.is_zipfile(p):
+                      with zipfile.ZipFile(p) as z:z.extractall(dest); return True
+                  if tarfile.is_tarfile(p):
+                      with tarfile.open(p) as t:t.extractall(dest); return True
+                  if p.suffix.lower() in ['.7z']:
+                      subprocess.run(['7z','x','-y',str(p),'-o'+str(dest)],check=False,stdout=subprocess.DEVNULL); return True
+              except Exception as e: errors.append({'file':str(p),'error':'extract '+repr(e)})
+              return False
+          queue=list(RAW.rglob('*')); done=set()
+          while queue:
+              p=queue.pop(0)
+              if not p.is_file() or str(p) in done: continue
+              done.add(str(p))
+              try:
+                  if p.stat().st_size>150_000_000: continue
+                  dest=EXT/(p.name+'_x')
+                  if extract_archive(p,dest):
+                      queue.extend(dest.rglob('*'))
+              except: pass
+          
+          # Clone public Salesforce metadata dump and inspect implementation/data references.
+          meta=OUT/'metadata_repo'
+          subprocess.run(['git','clone','--depth','1','https://github.com/Sharex508/Agentnattqa.git',str(meta)],check=False,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=600)
+          grep_terms=['NT2300','NT2808','NT2999','T-300','Product Matrix','CONTAINER_PID__c','CONTAINER_Model_Number__c','UnitLookup','69NT40-541']
+          with open(OUT/'metadata_grep.txt','w',encoding='utf-8') as g:
+              for term in grep_terms:
+                  g.write('\n===== '+term+' =====\n')
+                  cp=subprocess.run(['grep','-RIn','--binary-files=without-match','--exclude-dir=.git',term,str(meta)],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=300)
+                  g.write(cp.stdout[:2_000_000])
+          
+          # Text extraction and structured mapping.
+          pid_re=re.compile(r'\bNT(2[3-9]\d\d)\b',re.I)
+          model_re=re.compile(r'\b69NT\d{2}-\d{3}-(?:\d{3})(?:\s*(?:to|through|[-–—~～])\s*(?:(?:69NT\d{2}-\d{3}-)?\d{3}))?',re.I)
+          mapping=defaultdict(set); evidence=defaultdict(list)
+          texts=[]
+          def add_pair(pid,models,source,context,method):
+              pid=pid.upper()
+              if not re.fullmatch(r'NT2[3-9]\d\d',pid): return
+              for mod in models:
+                  mod=' '.join(mod.upper().replace('–','-').replace('—','-').replace('～','-').split())
+                  mapping[pid].add(mod)
+              evidence[pid].append({'models':sorted(set(models)),'source':source,'method':method,'context':context[:2500]})
+          def process_text(txt,source,html=False):
+              if not txt:return
+              texts.append((source,txt))
+              # Same line / record / option is strongest.
+              for line in txt.splitlines():
+                  pids=['NT'+x for x in pid_re.findall(line)]
+                  mods=model_re.findall(line)
+                  if pids and mods:
+                      for pid in pids:add_pair(pid,mods,source,line,'same-line')
+              # JSON-like objects or semicolon-delimited records.
+              for chunk in re.split(r'[\r\n]{2,}|(?<=\})\s*,\s*(?=\{)',txt):
+                  pids=['NT'+x for x in pid_re.findall(chunk)]
+                  mods=model_re.findall(chunk)
+                  if pids and mods and len(chunk)<10000:
+                      for pid in pids:add_pair(pid,mods,source,chunk,'same-record')
+              # Carefully limited proximity when exactly one PID is near one or more models.
+              for m in pid_re.finditer(txt):
+                  win=txt[max(0,m.start()-350):min(len(txt),m.end()+550)]
+                  pids2=pid_re.findall(win); mods=model_re.findall(win)
+                  if len(set(pids2))==1 and mods:
+                      add_pair('NT'+m.group(1),mods,source,win,'unique-proximity')
+          
+          allfiles=[]
+          for base in [RAW,EXT,meta]:
+              if base.exists(): allfiles.extend([p for p in base.rglob('*') if p.is_file()])
+          for p in allfiles:
+              try:
+                  if p.stat().st_size>80_000_000: continue
+                  data=p.read_bytes(); ext=p.suffix.lower(); txt=None
+                  if data.startswith(b'%PDF') or ext=='.pdf':
+                      try:
+                          doc=fitz.open(stream=data,filetype='pdf'); txt='\n'.join(page.get_text('text') for page in doc)
+                      except: pass
+                  elif ext in ['.xlsx','.xls']:
+                      try:
+                          xl=pd.ExcelFile(io.BytesIO(data));
+                          txt='\n'.join(df.to_csv(index=False) for df in [xl.parse(s,dtype=str) for s in xl.sheet_names])
+                      except: pass
+                  elif ext in ['.csv','.txt','.htm','.html','.js','.json','.xml','.md','.yml','.yaml','.sql','.cls','.cmp','.app','.resource','.page','.component','.ts','.tsx'] or len(data)<8_000_000:
+                      for enc in ['utf-8','utf-16','latin-1']:
+                          try: txt=data.decode(enc); break
+                          except: pass
+                  if txt:
+                      process_text(txt,str(p),ext in ['.htm','.html'])
+                      if ext in ['.htm','.html']:
+                          soup=BeautifulSoup(txt,'lxml')
+                          for tr in soup.select('tr'):
+                              row=' | '.join(' '.join(c.stripped_strings) for c in tr.select('th,td'))
+                              pids=['NT'+x for x in pid_re.findall(row)]; mods=model_re.findall(row)
+                              if pids and mods:
+                                  for pid in pids:add_pair(pid,mods,str(p),row,'html-table-row')
+                          for opt in soup.select('option'):
+                              s=(opt.get('value','')+' '+' '.join(opt.stripped_strings))
+                              pids=['NT'+x for x in pid_re.findall(s)]; mods=model_re.findall(s)
+                              if pids and mods:
+                                  for pid in pids:add_pair(pid,mods,str(p),s,'html-option')
+              except Exception as e: pass
+          
+          # Search-index snippets are lower confidence, but only accept an exact same snippet pair.
+          for rec in link_evidence:
+              sn=rec.get('snippet','')
+              pids=['NT'+x for x in pid_re.findall(sn)]; mods=model_re.findall(sn)
+              if len(set(pids))==1 and mods:
+                  add_pair(pids[0],mods,rec.get('source','search-index'),sn,'search-snippet')
+          
+          # Deduplicate evidence and produce a complete 700-row table, with blank only when no verified relationship exists.
+          rows=[]
+          for n in range(2300,3000):
+              pid=f'NT{n}'
+              mods=sorted(mapping.get(pid,set()))
+              rows.append((pid,'; '.join(mods)))
+          pd.DataFrame(rows,columns=['部件编号','对应的机型范围']).to_csv(OUT/'Carrier_NT2300_NT2999_PID_Model.csv',index=False,encoding='utf-8-sig')
+          with open(OUT/'mapping_evidence.json','w',encoding='utf-8') as f:json.dump(evidence,f,ensure_ascii=False,indent=2)
+          with open(OUT/'fetched.json','w',encoding='utf-8') as f:json.dump(fetched,f,ensure_ascii=False,indent=2)
+          with open(OUT/'candidate_urls.json','w',encoding='utf-8') as f:json.dump(candidates,f,ensure_ascii=False,indent=2)
+          with open(OUT/'link_evidence.json','w',encoding='utf-8') as f:json.dump(link_evidence,f,ensure_ascii=False,indent=2)
+          with open(OUT/'errors.json','w',encoding='utf-8') as f:json.dump(errors,f,ensure_ascii=False,indent=2)
+          
+          covered=sum(bool(x[1]) for x in rows)
+          fam=defaultdict(int)
+          for _,mods in rows:
+              for m in re.findall(r'69NT\d{2}-\d{3}',mods):fam[m]+=1
+          coverage={'covered_pid_count':covered,'total_pid_count':700,'missing_pid_count':700-covered,'family_counts':dict(sorted(fam.items())),'fetched_count':len(fetched),'candidate_count':len(candidates)}
+          (OUT/'coverage.json').write_text(json.dumps(coverage,ensure_ascii=False,indent=2),encoding='utf-8')
+          
+          # Excel, exactly two visible fields on one worksheet.
+          wb=Workbook(); ws=wb.active; ws.title='PID对应机型'
+          ws.append(['部件编号','对应的机型范围'])
+          for row in rows: ws.append(row)
+          ws.freeze_panes='A2'; ws.auto_filter.ref='A1:B701'
+          ws.column_dimensions['A'].width=16; ws.column_dimensions['B'].width=80
+          for c in ws[1]:
+              c.font=c.font.copy(bold=True,color='FFFFFF'); c.fill=c.fill.copy(fill_type='solid',fgColor='0F5B78'); c.alignment=c.alignment.copy(horizontal='center')
+          for row in ws.iter_rows(min_row=2,max_row=701):
+              row[0].alignment=row[0].alignment.copy(horizontal='center')
+              row[1].alignment=row[1].alignment.copy(wrap_text=True)
+          wb.save(OUT/'Carrier_NT2300_NT2999_全部机型_研究结果.xlsx')
+          
+          with open(OUT/'REPORT.txt','w',encoding='utf-8') as f:
+              f.write('COVERAGE\n'+json.dumps(coverage,ensure_ascii=False,indent=2)+'\n\n')
+              f.write('DISCOVERED ACTUAL LINKS / INDEX EVIDENCE\n'+json.dumps(link_evidence,ensure_ascii=False,indent=2)[:5_000_000]+'\n\n')
+              f.write('LOG\n'+'\n'.join(report)+'\n')
+          log('FINAL COVERAGE '+json.dumps(coverage,ensure_ascii=False))
+          PY
+          python /tmp/research.py
+      - name: Commit research results to branch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add carrier_pid_research_v2
+          git commit -m "Add Carrier PID research results [skip ci]" || true
+          git push origin HEAD:temp/carrier-pid-research-v2-20260902
+      - name: Upload full research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-pid-research-v2
+          path: carrier_pid_research_v2
+          retention-days: 1
