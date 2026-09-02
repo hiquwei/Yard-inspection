@@ -1,0 +1,60 @@
+name: Temporary Carrier CF3 Retrieval
+
+on:
+  push:
+    branches:
+      - temp/carrier-pid-map-20260902
+
+permissions:
+  contents: write
+
+env:
+  SOURCE_URL: https://www.shareddocs.com/hvac/docs/2000/Public/0C/cf260615cf3.zip
+
+jobs:
+  retrieve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download official Carrier configuration archive
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p carrier_cf3
+          curl -L --fail --retry 5 --retry-delay 3 \
+            -A 'Mozilla/5.0' \
+            "$SOURCE_URL" \
+            -o carrier_cf3/cf260615cf3.zip
+          unzip -l carrier_cf3/cf260615cf3.zip | tee carrier_cf3/archive_listing.txt
+          unzip -o carrier_cf3/cf260615cf3.zip -d carrier_cf3/extracted
+
+      - name: Generate diagnostics and searchable strings
+        shell: bash
+        run: |
+          set -euxo pipefail
+          CF3="$(find carrier_cf3/extracted -type f -iname '*.cf3' | head -n 1)"
+          test -n "$CF3"
+          {
+            echo "source=$SOURCE_URL"
+            echo "cf3=$CF3"
+            ls -lah carrier_cf3 carrier_cf3/extracted
+            file "$CF3"
+            sha256sum carrier_cf3/cf260615cf3.zip "$CF3"
+            echo '--- first 512 bytes ---'
+            xxd -l 512 "$CF3"
+          } > carrier_cf3/diagnostics.txt
+          strings -a -n 3 "$CF3" > carrier_cf3/strings_ascii.txt || true
+          strings -a -el -n 3 "$CF3" > carrier_cf3/strings_utf16le.txt || true
+
+      - name: Upload official archive and extracted database
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-cf3-260615
+          path: carrier_cf3/
+          retention-days: 1
+          compression-level: 0
+
+      - name: Remove temporary branch
+        if: always()
+        shell: bash
+        run: |
+          git push origin --delete "${GITHUB_REF_NAME}" || true
