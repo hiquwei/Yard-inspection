@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+  <script src="https://av.archive.org/jw/8/jwplayer.js"></script>
+
+  <h1>Some rough playlist examples, using videos from multiple items</h1>
+  This is for users/developers who can use javascript.
+  "View source" to see the code.
+
+
+  <h3>Example using .mp4 and .ogv explicit filenames</h3>
+  <div id="playa"> </div>
+    <script>
+    jwplayer('playa').setup({
+        "playlist": [
+            { duration:5,
+              title:"camels",
+              image:"https://archive.org/download/camels/format=Thumbnail",
+              sources:[
+                  {file:"https://archive.org/download/camels/camels.mp4"},
+                  {file:"https://archive.org/download/camels/camels.ogv"} ]
+            },
+            { duration:115,
+              title:"commute",
+              image:"https://archive.org/download/commute/format=Thumbnail",
+              sources:[
+                  {file:"https://archive.org/download/commute/commute.mp4"},
+                  {file:"https://archive.org/download/commute/commute.ogv"} ]
+            },
+            { duration:5717,
+              title:"night of the living dead",
+              image:"https://archive.org/download/night_of_the_living_dead/format=Thumbnail",
+              sources:[
+                  {file:"https://archive.org/download/night_of_the_living_dead/night_of_the_living_dead_512kb.mp4"},
+                  {file:"https://archive.org/download/night_of_the_living_dead/night_of_the_living_dead.ogv"} ]
+            }
+        ],
+        "startparam": "start",
+        "repeat": "list",
+        "width": 640,
+        "height": 480
+    });
+  </script>
+
+
+
+  <h3>Example similar to above but just .mp4 and format "patterns"</h3>
+  <div id="playb"> </div>
+  <script>
+    jwplayer("playb").setup({
+        "playlist": [
+            { duration:5,
+              title:"camels",
+              image:"https://archive.org/download/camels/format=Thumbnail",
+              sources:[ {file:"https://archive.org/download/camels/format=h.264",type:"video/mp4"} ]
+            },
+            { duration:115,
+              title:"commute",
+              image:"https://archive.org/download/commute/format=Thumbnail",
+              sources:[ {file:"https://archive.org/download/commute/format=h.264",type:"video/mp4"} ]
+            },
+            { duration:5717,
+              title:"night of the living dead",
+              image:"https://archive.org/download/night_of_the_living_dead/format=Thumbnail",
+              sources:[ {file:"https://archive.org/download/night_of_the_living_dead/format=512Kb+MPEG4",type:"video/mp4"} ]
+            }
+        ],
+        "startparam":"start",
+        "repeat":"list",
+        "width":640,
+        "height":480
+    });
+  </script>

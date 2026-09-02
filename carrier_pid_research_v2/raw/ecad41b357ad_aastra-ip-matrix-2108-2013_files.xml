@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files>
+  <file name="Aastra_IP_Matrix_2108-2013.pdf" source="original">
+    <mtime>1786860823</mtime>
+    <size>3956690</size>
+    <md5>89481d86c8100a81d9c5342409d58955</md5>
+    <crc32>14fd6a7c</crc32>
+    <sha1>c53ff81d4f64948602348bdd59433d54ece3a3e7</sha1>
+    <format>Text PDF</format>
+    <viruscheck>1786861186</viruscheck>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_chocr.html.gz" source="derivative">
+    <ocr>tesseract 5.3.0-6-g76ae</ocr>
+    <ocr_parameters>lang-eng;two-pass-disabled;pass-dpi-disabled;autonomous-mode-disabled;binarisation-method-otsu</ocr_parameters>
+    <ocr_module_version>0.0.21</ocr_module_version>
+    <ocr_detected_script>Latin</ocr_detected_script>
+    <ocr_detected_script_conf>1.0000</ocr_detected_script_conf>
+    <ocr_detected_lang>en</ocr_detected_lang>
+    <ocr_detected_lang_conf>1.0000</ocr_detected_lang_conf>
+    <format>chOCR</format>
+    <original>Aastra_IP_Matrix_2108-2013_jp2.zip</original>
+    <mtime>1786880816</mtime>
+    <size>203090</size>
+    <md5>76d7dfd4e19228b36ac6a21f5ae5e174</md5>
+    <crc32>ae50c86e</crc32>
+    <sha1>1315437708a47aa4b6165f8d1951dfd03efd9329</sha1>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_djvu.txt" source="derivative">
+    <format>DjVuTXT</format>
+    <original>Aastra_IP_Matrix_2108-2013_djvu.xml</original>
+    <mtime>1786880873</mtime>
+    <size>15327</size>
+    <md5>a3e2688637265d3896d28a4c3b8db800</md5>
+    <crc32>6b9871fe</crc32>
+    <sha1>442b6fffa11bc2be1dc950333c918534c480f5fa</sha1>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_djvu.xml" source="derivative">
+    <format>Djvu XML</format>
+    <original>Aastra_IP_Matrix_2108-2013_hocr.html</original>
+    <mtime>1786880843</mtime>
+    <size>198845</size>
+    <md5>adc04655897612d56a8ed2de2e217abf</md5>
+    <crc32>925c9802</crc32>
+    <sha1>c38a345a3c3cdc3ca2c87cdf964717a40b057f63</sha1>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_hocr.html" source="derivative">
+    <hocr_char_to_word_module_version>1.3.0</hocr_char_to_word_module_version>
+    <hocr_char_to_word_hocr_version>1.1.56</hocr_char_to_word_hocr_version>
+    <ocr_parameters>lang-eng;two-pass-disabled;pass-dpi-disabled;autonomous-mode-disabled;binarisation-method-otsu</ocr_parameters>
+    <ocr_module_version>0.0.21</ocr_module_version>
+    <ocr_detected_script>Latin</ocr_detected_script>
+    <ocr_detected_script_conf>1.0000</ocr_detected_script_conf>
+    <ocr_detected_lang>en</ocr_detected_lang>
+    <ocr_detected_lang_conf>1.0000</ocr_detected_lang_conf>
+    <format>hOCR</format>
+    <original>Aastra_IP_Matrix_2108-2013_chocr.html.gz</original>
+    <mtime>1786880833</mtime>
+    <size>408887</size>
+    <md5>d679968a36bd29779b88cb4c52322059</md5>
+    <crc32>6e704c1b</crc32>
+    <sha1>965361593f40fd5f261293b1e5f47bd0031b95c0</sha1>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_hocr_pageindex.json.gz" source="derivative">
+    <hocr_pageindex_module_version>1.1.0</hocr_pageindex_module_version>
+    <hocr_pageindex_hocr_version>1.1.56</hocr_pageindex_hocr_version>
+    <format>OCR Page Index</format>
+    <original>Aastra_IP_Matrix_2108-2013_hocr.html</original>
+    <mtime>1786880851</mtime>
+    <size>125</size>
+    <md5>5a3818698c0d177f1a2129dfb44d1e97</md5>
+    <crc32>b1051bda</crc32>
+    <sha1>a4d5695b064c3362d91a79ad9fa820c50c3c9950</sha1>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_hocr_searchtext.txt.gz" source="derivative">
+    <hocr_fts_text_module_version>1.2.0</hocr_fts_text_module_version>
+    <hocr_fts_text_hocr_version>1.1.56</hocr_fts_text_hocr_version>
+    <word_conf_0_10>36</word_conf_0_10>
+    <word_conf_11_20>23</word_conf_11_20>
+    <word_conf_21_30>27</word_conf_21_30>
+    <word_conf_31_40>22</word_conf_31_40>
+    <word_conf_41_50>22</word_conf_41_50>
+    <word_conf_51_60>29</word_conf_51_60>
+    <word_conf_61_70>35</word_conf_61_70>
+    <word_conf_71_80>21</word_conf_71_80>
+    <word_conf_81_90>74</word_conf_81_90>
+    <word_conf_91_100>1918</word_conf_91_100>
+    <format>OCR Search Text</format>
+    <original>Aastra_IP_Matrix_2108-2013_hocr.html</original>
+    <mtime>1786880864</mtime>
+    <size>4560</size>
+    <md5>95ce64f07d72fe8b4781d3478c959cbf</md5>
+    <crc32>03f86fb8</crc32>
+    <sha1>380b437af40d05a7ad8d123379221480b0ff72db</sha1>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_jp2.zip" source="derivative">
+    <format>Single Page Processed JP2 ZIP</format>
+    <original>Aastra_IP_Matrix_2108-2013.pdf</original>
+    <mtime>1786880742</mtime>
+    <size>2937364</size>
+    <md5>ec07b573b911fc5831588596f679ca0a</md5>
+    <crc32>cab211a3</crc32>
+    <sha1>326461a7263818044d7aa344b26a36027162923a</sha1>
+    <filecount>8</filecount>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_page_numbers.json" source="derivative">
+    <hocr_pagenumber_module_version>1.0.5</hocr_pagenumber_module_version>
+    <hocr_pagenumber_hocr_version>1.1.54</hocr_pagenumber_hocr_version>
+    <hocr_pagenumber_confidence>41</hocr_pagenumber_confidence>
+    <format>Page Numbers JSON</format>
+    <original>Aastra_IP_Matrix_2108-2013_hocr.html</original>
+    <mtime>1786880892</mtime>
+    <size>1499</size>
+    <md5>18336d444fe1f3e7634f4887c4714be3</md5>
+    <crc32>83ce25bd</crc32>
+    <sha1>05f954eea256726e41bbeee8064962c7b0be7c7b</sha1>
+  </file>
+  <file name="Aastra_IP_Matrix_2108-2013_scandata.xml" source="derivative">
+    <format>Scandata</format>
+    <original>Aastra_IP_Matrix_2108-2013_djvu.xml</original>
+    <mtime>1786880892</mtime>
+    <size>2895</size>
+    <md5>5c2d50ceeb6d871fd848b93a23f9a58e</md5>
+    <crc32>7dd4117e</crc32>
+    <sha1>10cf0fd5742973726f2f18c8d3ec17a11ff3cda4</sha1>
+  </file>
+  <file name="__ia_thumb.jpg" source="original">
+    <mtime>1786880909</mtime>
+    <size>9024</size>
+    <md5>468a04db01bbe4943db03e0a45c5c6d5</md5>
+    <crc32>1f85c8ea</crc32>
+    <sha1>cfdc2c403d4fc651993227e5afafa0e999014dcc</sha1>
+    <format>Item Tile</format>
+  </file>
+  <file name="aastra-ip-matrix-2108-2013_archive.torrent" source="metadata">
+    <btih>e03c37f401569f846fb754f0484c79a13c8fe259</btih>
+    <mtime>1786880909</mtime>
+    <size>3987</size>
+    <md5>cf6c97e4955a2e33400e3d0c9525c144</md5>
+    <crc32>88f846e3</crc32>
+    <sha1>1418338f7b4bd327b49bb64712004b02627e764b</sha1>
+    <format>Archive BitTorrent</format>
+  </file>
+  <file name="aastra-ip-matrix-2108-2013_files.xml" source="original">
+    <format>Metadata</format>
+    <md5>0331fa617f65b467720db39596a368cb</md5>
+    <summation>md5</summation>
+  </file>
+  <file name="aastra-ip-matrix-2108-2013_meta.sqlite" source="original">
+    <mtime>1786860864</mtime>
+    <size>53248</size>
+    <md5>a2d895e243544fe28ccc6a78e2ad6a34</md5>
+    <crc32>dab720e1</crc32>
+    <sha1>1586bf758ac0a1ec251a6533be42bac691654472</sha1>
+    <format>Metadata</format>
+  </file>
+  <file name="aastra-ip-matrix-2108-2013_meta.xml" source="original">
+    <mtime>1786880892</mtime>
+    <size>8386</size>
+    <md5>5191b45be60cb8e36902a787eb514e6c</md5>
+    <crc32>4c01c1db</crc32>
+    <sha1>2946c1e0e95338f1e2de39c7ada09e63ab7aa523</sha1>
+    <format>Metadata</format>
+  </file>
+</files>

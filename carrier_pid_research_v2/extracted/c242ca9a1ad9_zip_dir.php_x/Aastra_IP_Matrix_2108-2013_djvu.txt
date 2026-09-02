@@ -1,0 +1,933 @@
+l 
+
+
+NONES 
+
+
+@) 
+
+
+Fd 
+
+
+Aastra 6700) Series 
+
+
+Enterprise-grade portfolio featuring a 
+global design and expansion module 
+options to increase call and feature 
+capability. 
+
+
+A family of powerful and flexible SIP- 
+based products offering advanced 
+interoperability with major IP Telephony 
+platforms. All Aastra enterprise-grade 
+6700i Series IP telephones feature 
+embedded XML browser capability, full- 
+duplex speakerphone, wideband audio 
+
+
+Aastra 6730i 
+
+
+‘+ Slimmer design 
+‘+ Up to 6 lines with call appearances 
+
+
+‘% Shared call and bridged 
+
+lines appearances 
+
+Multi-proxy support 
+
+Distinctive ringing, priority alerting 
+3 line LCD display 
+
+LED for call and message 
+
+waiting indicator 
+
+Personal directory 
+
+
+K KK 
+
+
+4K 
+
+
+Aastra 6731i 
+
+
+‘+ Slimmer design 
+
+* Up to 6 lines with call appearances 
+*« Shared call and bridged 
+
+lines appearances 
+
+Multi-proxy support 
+
+Distinctive ringing, priority alerting 
+3 line LCD display 
+
+LED for call and message 
+
+waiting indicator 
+
+Personal directory 
+
+
+kK KK kK 
+
+
+K 
+
+
+Aastra 6735i 
+
+
+‘+ Integrated Gigabit Ethernet 
+‘+ Up to 9 lines with call appearances 
+‘+ Shared call and bridged 
+
+line appearances 
+* Multi-proxy support 
+‘+ Distinctive ringing, priority alerting 
+* 144x75 pixels graphical LCD display 
+*% LED for call and message 
+
+waiting indicator 
++ Personal directory 
+* Call forward/Call transfer/Call waiting 
+* Caller and calling line information 
+
+
+technology, up to nine call appearance 
+lines, Busy Lamp Field support and 
+extensive storage capacity for directories, 
+callers lists, etc. In addition, all models 
+offer simplified deployment, 4-position 
+footstands and are wall mountable. 
+Most 6700i models support Power Over 
+Ethernet (POE) and AC power options 
+with some models offering attendant 
+functionality through optional Expansion 
+Modules. 
+
+
+Call forward/Call transfer/Call waiting 
+Caller and calling line information 
+Local 3-way conference 
+
+Intercom with auto-answer 
+
+Do Not Disturb 
+
+4 navigational keys 
+
+8 programmable keys with LEDs 
+
+10 pre-defined hard keys 
+
+Live dial pad or pre-dial support 
+Aastra Hi-Q™ Audio Technology 
+
+
+ee KKK KOK KK 
+
+
+Call forward/Call transfer/Call waiting 
+Caller and calling line information 
+Local 3-way conference 
+
+Intercom with auto-answer 
+
+Do Not Disturb 
+
+4 navigational keys 
+
+8 programmable keys with LEDs 
+
+10 pre-defined hard keys 
+
+Live dial pad or pre-dial support 
+Aastra Hi-Q™ Audio Technology 
+
+
+KKK KK KK KK 
+
+
+Callers log 
+
+Local 3-way conference 
+
+Intercom with auto-answer 
+
+Do Not Disturb 
+
+4 call appearance lines with LEDs 
+4 navigational keys 
+
+6 customizable softkeys with LEDs; 
+programmable up to 26 functions 
+* 6 programmable keys with LEDs 
+
+‘+ 8 predefined hard keys 
+
+
+* Supports up to 3 M670i 
+or M675i modules 
+*> HD Audio 
+
+
+KK KK KK kK 
+
+
+Aastra 6737i 
+
+
+‘+ Integrated Gigabit Ethernet 
+* Up to 9 lines with call appearances 
+* Shared call and bridged 
+line appearances 
++ Multi-proxy support 
+‘+ Distinctive ringing, priority alerting 
+
+
+* 144x128 pixels graphical LCD display 
+
+
+LED for call and message 
+waiting indicator 
+‘+ Personal directory 
+
+
+‘+ Call forward/Call transfer/Call waiting 
+
+
+* Caller and calling line information 
+
+
+Aastra 6739i 
+
+
+* Large 5.7” Full VGA (640x480) 
+Color Touch Screen LCD 
+
+‘ Integrated Gigabit Ethernet 
+
+‘+ Bluetooth headset support 
+
+* Built-in USB port 
+
+‘+ Intuitive graphical user interface 
+and navigation menus 
+
+‘+ On screen QWERTY keyboard 
+for easy input and editing 
+
+‘+ XML support for productivity 
+
+enhancing applications 
+
+Up to 9 lines with call appearances 
+
+Multi-proxy support 
+
+Up to 55 programmable softkeys 
+
+Distinctive ringing, priority alerting 
+
+
+kK KK & 
+
+
+Aastra 6753i 
+
+
+‘+ Up to 9 lines with call appearances 
+‘+ Shared call and bridged 
+line appearances 
++ Multi-proxy support 
+‘+ Distinctive ringing, priority alerting 
+* 3 line LCD display 
+‘ LED for call and message 
+waiting indicator 
+* Personal directory 
+
+
+* Call forward/Call transfer/Call waiting 
+
+
+* Caller and calling line information 
+
+
+KK KK KK 
+
+
+kK K kK & 
+
+
+KKK KK KK K kK 
+
+
+Callers log 
+
+Local 3-way conference 
+
+Intercom with auto-answer 
+
+Do Not Disturb 
+
+4 call appearance lines with LEDs 
+
+4 navigational keys 
+
+12 customizable softkeys with LEDs; 
+programmable up to 30 functions 
+
+8 predefined hard keys 
+
+
+Supports up to 3 M670i 
+or M675i modules 
+
+
+HD Audio 
+
+
+Personal directory and Redial 
+
+list with Picture support 
+
+Call forward, Call transfer, 
+
+Call waiting, Call timer 
+
+Caller and Calling Line 
+information with picture ID 
+Callers list, Missed Call Notification 
+
+
+Built-in Local 3-way Conference support 
+
+
+Intercom and Paging with autoanswer 
+One-touch call transfer, 
+
+conference or call park 
+
+Busy Lamp Field (BLF) support 
+
+Shared call and bridged line 
+appearances (SCA, BLA) 
+
+HD Audio 
+
+
+Local 3-way conference 
+
+Intercom with auto-answer 
+
+Do Not Disturb 
+
+3 call appearance lines with LEDs 
+6 navigational keys 
+
+6 programmable keys with LEDs 
+10 predefined hard keys 
+
+Live dial pad or pre-dial support 
+Supports up to 3 M670i modules 
+Aastra Hi-Q™ Audio Technology 
+
+
+Telephone Features 
+
+
+Number of lines 9 9 6 6 
+
+Multi-line, multi-proxy registration support . . . . 
+Programmable functions (hard keys/softkeys) 7 (7/0) 20 (0/6) 8 (8/0) 8 (8/0) 
+Pre-programmed feature keys 10 8 10 10 
+Compatible with M670i expansion module 
+
+Compatible with M675i expansion module 
+
+Full-duplex speakerphone . : . . 
+
+Dedicated headset jack Modular connector Modular connector Headset Mode Support Headset Mode Support 
+
+
+Display screen size 
+
+
+3 lines x 16 characters 
+
+
+8 lines x 20 characters 
+
+
+3 lines x 16 characters 
+
+
+3 lines x 16 characters 
+
+
+Backlit display 
+
+
+Adjustable display contrast 
+
+
+Visual message waiting indication 
+
+
+Busy lamp field (BLF) 
+
+
+Call park/pickup 
+
+
+Do not disturb (DND) 
+
+
+Call waiting display 
+
+
+Call forward 
+
+
+Local 3-Way conference 
+
+
+Missed call indicator 
+
+
+Multicast Group paging 
+
+
+Intercom/Auto answer capability 
+
+
+Directory Name/Number capacity 
+
+
+Callers log Name/Number capacity 
+
+
+Last Number Redial Name/Number capacity 
+
+
+Priority alert/distinctive ringing 
+
+
+Multilingual support 
+
+
+Power Options 
+Power over Ethernet 
+
+
+Optional mid-span PoE injector 
+
+
+AC wall adapter (Included) 
+Configuration & Administration 
+Telephone User Interface 
+
+
+Yes/No (check SKU) 
+
+
+Web User Interface 
+
+
+Encryption of configuration file 
+
+
+Software & Config. download - TFTP, FTP, HTTP 
+
+
+Automatic software update 
+Network Support and Interfaces 
+Ethernet ports 
+
+
+Two 10/100 Mbps 
+
+
+Two 10/100 Mbps 
+
+
+One 10/100 Mbps 
+
+
+Two 10/100 Mbps** 
+
+
+T 
+
+
+802.1p/q VLAN tagging & QOS 
+
+
+802.1X support 
+
+
+NAT support phone side 
+
+
+STUN, TURN 
+
+
+Outbound proxy support 
+
+
+IETF DHCP 
+
+
+IETF SNTP 
+
+
+SRTP and TLS security 
+
+
+LLDP-MED 
+
+
+USB Interface 
+Protocol Support 
+IETF SIP (RFC3261) 
+
+
+XML support 
+Audio and Codec 
+Aastra Hi-Q™ Audio Technology 
+
+
+Aastra HD Audio Technology 
+
+
+G.711p-law/A-law, G.729, G722 
+
+
+Voice Quality Metrics, including MOS 
+
+
+EHS support for Wireless headsets 
+
+
+Built-in bluetooth interface 
+
+
+* Latest builds ** Software switched 
+
+
+9 9 9 9 9 9 
+26 (6/6) 30 (0/12) 55 (0/55) 6 (6/0) 26 (6/6) 30 (0/12) 
+8 8 14 10 8 8 
+Modular connector Modular connector Modular connector Modular connector Modular connector Modular connector 
+; : 640x480 : , : 
+144 x 75 pixels 144 x 128 pixels Color Touch cereen 3 lines x 16 characters 144 x 75 pixels 144 x 128 pixels 
+200 200 200 200 200 200 
+200 200 200 200 200 200 
+100 100 100 100 100 100 
+Optional Optional Optional . : : 
+wo 10/100/1000 Mbps _ Two 10/100/1000 Mbps __ Two 10/100/1000 Mbps Two 10/100 Mbps Two 10/100 Mbps Two 10/100 Mbps 
+
+
+Aastra 6755i 
+
+
+* Up to 9 lines with call appearances 
+‘+ Shared call and bridged 
+
+line appearances 
+* Multi-proxy support 
+* Distinctive ringing, priority alerting 
+* 144x75 pixels graphical LCD display 
+* LED for call and message 
+
+waiting indicator 
+* Personal directory 
++ Call forward/Call transfer/Call waiting 
+‘+ Caller and calling line information 
+‘© Callers log 
+
+
+Aastra 6757i 
+
+
+‘% Up to 9 lines with call appearances 
+* Shared call and bridged 
+
+line appearances 
++ Multi-proxy support 
++ Distinctive ringing, priority alerting 
+© 144x128 pixels graphical LCD display 
+‘+ LED for call and message 
+
+waiting indicator 
+‘+ Personal directory 
+‘> Call forward/Call transfer/Call waiting 
+* Caller and calling line information 
++ Callers log 
+
+
+Local 3-way conference 
+
+Intercom with auto-answer 
+
+Do Not Disturb 
+
+4 call appearance lines with LEDs 
+4 navigational keys 
+
+6 customizable softkeys with LEDs; 
+programmable up to 26 functions 
+* 6 programmable keys with LEDs 
+
+* 8 predefined hard keys 
+
+
+‘+ Supports up to 3 M670i 
+or M675i modules 
+
+
+‘+ Aastra Hi-Q™ Audio Technology 
+
+
+KKK KK *K 
+
+
+Local 3-way conference 
+
+Intercom with auto-answer 
+
+Do Not Disturb 
+
+4 call appearance lines with LEDs 
+
+4 navigational keys 
+
+12 customizable softkeys with LEDs; 
+programmable up to 30 functions 
+‘+ 8 predefined hard keys 
+
+
+‘+ Supports up to 3 M670i 
+or M675i modules 
+
+
++ Aastra Hi-Q™ Audio Technology 
+
+
+KK KK K « 
+
+
+M670i and M675i Expansion Modules 
+
+
+Both modules are directly powered 
+from the phone and can be used with 
+selected 6700i Series models. Up to 3 
+modules can be joined together with a 
+single telephone. Additional keys support 
+programmable features such as: Line, 
+Speed Dial, Busy Lamp Field (maximum 
+of 50 BLF per phone), Bridged Line 
+Appearance, Shared Call Appearance and 
+Do not Disturb. 
+
+
+Aastra M670i 
+
+
+* LED for status indication 
+
+* 36 programmable keys for 
+programmable features 
+
+‘++ Compatible with Aastra 6753i, 
+6755i, 6757i and 6739: models 
+
+
+Aastra M675i 
+
+
+‘+ LED for status indication 
+* 20 softkeys available on 
+3 screens (60 keys) 
+
+
+* 144x128 pixels graphical LCD display 
+» Soft white backlight for user comfort 
+in any lighting environment 
+* Configurable for Always On, Always 
+Off, or Auto (power saving) 
+‘+ Compatible with Aastra 6755i, 
+6757i and 6739i models 
+
+
+Aastra 9000i Series 
+
+
+Enterprise-grade portfolio offering a 
+value priced option for those looking 
+for advanced SIP features in a more 
+traditional phone design. 
+
+
+Employing the same powerful hardware 
+design found in the 6700i Series, the 
+9000i portfolio offers advanced, flexible 
+features and _ interoperability with 
+major IP Telephony platforms. All 9000i 
+Series phones are fully interoperable 
+
+
+Aastra 9143i 
+
+
+Up to 9 lines with call appearances 
+Shared call appearances 
+
+Multi-proxy support 
+
+3 line adjustable backlit display screen 
+3 call appearance lines with LEDs 
+
+4 navigational keys 
+
+7 programmable keys 
+
+10 predefined hard keys 
+
+Conference 
+
+
+Ke KK KOK KX 
+
+
+Aastra 9480i 
+
+
+Up to 9 lines with call appearances 
+Shared call appearances 
+Multi-proxy support 
+
+3.5” x 2.25”, 8 line, backlit display 
+4 call appearance lines with LEDs 
+4 navigational keys 
+
+6 customizable softkeys; 
+programmable up to 20 functions 
+8 predefined hard keys 
+Conference 
+
+
+Lae. | 
+
+
+K + 
+
+
+with major IP Telephony platforms 
+and feature embedded XML browser 
+capability, full duplex speakerphone, up 
+to 9 call appearances, Busy Lamp Field 
+support and extensive storage capacity 
+for directories, callers lists, etc. In 
+addition, all models support Power over 
+Ethernet (POE)/AC power options and 
+offer backlit screen displays, simplified 
+deployment and are wall mountable. 
+
+
+Call Forward/Call Transfer/Call Waiting 
+Redial 
+
+Dual 10/100 switched Ethernet ports 
+Personal Directory 
+
+LED for call and message 
+
+waiting indicator 
+
+* Caller and calling line information 
+
+* Callers Log 
+
+*+ Live dial pad or pre-dial support 
+
+
+KK KK K 
+
+
+tk 
+
+
+Personal Directory 
+
+LED for call and message 
+
+waiting indicator 
+
+Call Forward/Call Transfer/Call Waiting 
+Redial 
+
+Dual 10/100 switched Ethernet ports 
+Caller and calling line information 
+Callers Log 
+
+Live dial pad or pre-dial support 
+
+
+4K 
+
+
+KK KK K « 
+
+
+Rev. 28.08.13 
+
+
+Papice recyclé 
+
+
+Aastra S850i 
+
+
+SIP-based Wireless Conference Phone 
+Delivers a New Level of Freedom 
+and Flexibility for Audio and Video 
+Conferencing. 
+
+
+The S850i from Aastra, designed 
+specifically for use in conference rooms, 
+boardrooms and executive offices, 
+employs the latest in secure wireless 
+audio technology. Comprised of several 
+distinct components, the S850i redefines 
+the traditional conference call experience 
+giving users unprecedented freedom with 
+respect to placement and accessibility of 
+the speaker, microphones and dial pad. 
+Supporting wideband audio technology, 
+the S850i delivers superior sound quality 
+and performance meeting all of your 
+audio and video conferencing needs. 
+
+
+* Superior Audio Quality and 
+Performance — Two tabletop 
+omnidirectional microphones pick 
+up sound from all directions ensuring 
+everyone participating in the 
+conference call can be heard clearly. 
+An optional wearable microphone 
+allows for presenters to move freely 
+about the room and still be easily 
+heard without having to talk loudly 
+
+
+* Integration with Video Conferencing 
+and PC Applications — The S850i 
+is equipped with balanced analog 
+audio input/output connections 
+facilitating easy integration with video 
+conferencing systems such as the Aastra 
+BluStar™ for Conference Room solution. 
+This allows the S850i microphones 
+and speaker to be used for video calls 
+and provides excellent acoustic echo 
+cancellation and noise control for your 
+video calls. PC applications, including 
+BluStar for PC, can also be integrated 
+with the S850i using the same balanced 
+analog audio input/output connections 
+
+
+Aastra Technologies 
+155 Snow Blvd. 
+Concord, Ont., 
+
+L4K 4N9 
+
+Canada 
+www.aastra.com 
+
+
+Aastra S850i 
+
+
+* §850i Conference Phone Components 
+
+-One handset dialer for operation and 
+system configuration 
+
+-One wireless speaker 
+
+»Two omnidirectional tabletop 
+microphones 
+
+*One charger tray for speaker, 
+microphones and handset dialer, 
+supplied with universal AC power 
+adaptor 
+
+-One wireless base unit with 7 ft. 
+Ethernet cable 
+
+
+‘+ Available in two DECT 
+frequency standards 
+»DECT 6.0 (1920 — 1930 MHz) 
+»DECT ETSI ETS 300 175 (1880 - 1900 
+MHz) 
++ Call Manager Compatibility 
+» Aastra MX-ONE 
+Aastra 400 
+Aastra 5000 
+»Clearspan 
+» Multiple third party platforms 
+
+
+Copyright © 2013 Aastra Technologies Ltd. All rights reserved. Information in this document is subject to change without notice. 
+
+
+Aastra assumes no responsibility for any errors that may appear in this document. Product capabilities described in this document 
+Recwied paper PEtain solely to Aastra’s marketing activities in Canada. Availability in other markets may vary. 
+
+
+About Aastra 
+
+
+Aastra is a leading global supplier of 
+
+
+carrier-grade IP phones designed, 
+developed and manufactured based 
+on open standards to meet the 
+demanding requirements of small/ 
+medium business, enterprise and gov- 
+ernment customers. 
+
+
+Building on a long tradition of com- 
+bining durable phones with intui- 
+tive designs, Aastra’s IP phone port- 
+folio offers customers flexibility and 
+choice while delivering the perform- 
+ance, quality and value that business 
+demands. 
+
+
+For additional information on Aastra, 
+visit our website at : www.aastra.com 
+
+

@@ -1,0 +1,68 @@
+html {
+  /* provide a fallback for older browsers that don't support css vars */
+  font-size: 10px;
+  font-size: var(--ia-theme-base-font-size, 10px);
+}
+
+:root {
+  --app-page-max-width: 135rem;
+}
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(
+    --ia-theme-base-font-family,
+    'Helvetica Neue',
+    Helvetica,
+    Arial,
+    sans-serif
+  );
+  color: #333;
+  color: var(--ia-theme-primary-text-color, #333);
+  /*
+    Intentionally different than the #eee below otherwise old browsers will get a grey background.
+    In modern browsers, the background is grey with a white layer on top of it.
+  */
+  background-color: #fff;
+  background-color: var(--ia-theme-primary-background-color, #fbfbfd);
+  margin: 0;
+  padding: 0;
+  line-height: 1.42857143;
+}
+
+.no-js-redirect-container {
+  margin: 1rem;
+}
+
+/*
+  This is a fix for when the app gets rendered through rendertron or old browsers.
+  The DOM gets flattened and unfortunately, styles leak. One of the leaky styles
+  causes certain `<style>` tags to become visible because ShadyCSS uses the name of
+  the element to determine the scope of the style, eg:
+
+  <style class="style-scope media-menu">
+    .media-menu {
+      display: inline-block;  // causes this style block to be visible
+    }
+  </style>
+*/
+style {
+  display: none !important;
+}
+
+/* DONATION SLOT STYLING */
+#paypal-upsell-button {
+  opacity: 0.01;
+  padding-bottom: 0.6rem;
+}
+
+/* Donation Banner */
+div[data-owner='donationBannerHandler'] {
+  /* above nav's sliders */
+  z-index: 3;
+}
+
+#beta-access-message {
+  font-size: 14px;
+  margin: 16px;
+}

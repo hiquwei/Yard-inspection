@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<book>
+  <bookData>
+    <dpi>300</dpi>
+    <bookId>aastra-ip-matrix-2108-2013</bookId>
+    <leafCount>8</leafCount>
+    <scanDataVersion>5</scanDataVersion>
+  </bookData>
+  <pageData>
+    <page leafNum="0">
+      <pageType>Normal</pageType>
+      <addToAccessFormats>true</addToAccessFormats>
+      <origWidth>2550</origWidth>
+      <origHeight>3301</origHeight>
+      <cropBox>
+        <x>0</x>
+        <y>0</y>
+        <w>2550</w>
+        <h>3301</h>
+      </cropBox>
+      <ppi>300</ppi>
+      <bookStart>true</bookStart>
+    </page>
+    <page leafNum="1">
+      <pageType>Title</pageType>
+      <addToAccessFormats>true</addToAccessFormats>
+      <origWidth>2550</origWidth>
+      <origHeight>3301</origHeight>
+      <cropBox>
+        <x>0</x>
+        <y>0</y>
+        <w>2550</w>
+        <h>3301</h>
+      </cropBox>
+      <ppi>300</ppi>
+    </page>
+    <page leafNum="2">
+      <pageType>Normal</pageType>
+      <addToAccessFormats>true</addToAccessFormats>
+      <origWidth>2550</origWidth>
+      <origHeight>3301</origHeight>
+      <cropBox>
+        <x>0</x>
+        <y>0</y>
+        <w>2550</w>
+        <h>3301</h>
+      </cropBox>
+      <ppi>300</ppi>
+    </page>
+    <page leafNum="3">
+      <pageType>Normal</pageType>
+      <addToAccessFormats>true</addToAccessFormats>
+      <origWidth>2550</origWidth>
+      <origHeight>3301</origHeight>
+      <cropBox>
+        <x>0</x>
+        <y>0</y>
+        <w>2550</w>
+        <h>3301</h>
+      </cropBox>
+      <ppi>300</ppi>
+      <pageNumber>7</pageNumber>
+    </page>
+    <page leafNum="4">
+      <pageType>Normal</pageType>
+      <addToAccessFormats>true</addToAccessFormats>
+      <origWidth>2550</origWidth>
+      <origHeight>3301</origHeight>
+      <cropBox>
+        <x>0</x>
+        <y>0</y>
+        <w>2550</w>
+        <h>3301</h>
+      </cropBox>
+      <ppi>300</ppi>
+      <pageNumber>8</pageNumber>
+    </page>
+    <page leafNum="5">
+      <pageType>Normal</pageType>
+      <addToAccessFormats>true</addToAccessFormats>
+      <origWidth>2550</origWidth>
+      <origHeight>3301</origHeight>
+      <cropBox>
+        <x>0</x>
+        <y>0</y>
+        <w>2550</w>
+        <h>3301</h>
+      </cropBox>
+      <ppi>300</ppi>
+    </page>
+    <page leafNum="6">
+      <pageType>Normal</pageType>
+      <addToAccessFormats>true</addToAccessFormats>
+      <origWidth>2550</origWidth>
+      <origHeight>3301</origHeight>
+      <cropBox>
+        <x>0</x>
+        <y>0</y>
+        <w>2550</w>
+        <h>3301</h>
+      </cropBox>
+      <ppi>300</ppi>
+    </page>
+    <page leafNum="7">
+      <pageType>Normal</pageType>
+      <addToAccessFormats>true</addToAccessFormats>
+      <origWidth>2550</origWidth>
+      <origHeight>3301</origHeight>
+      <cropBox>
+        <x>0</x>
+        <y>0</y>
+        <w>2550</w>
+        <h>3301</h>
+      </cropBox>
+      <ppi>300</ppi>
+    </page>
+  </pageData>
+</book>

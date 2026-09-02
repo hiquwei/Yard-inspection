@@ -1,0 +1,6 @@
+[
+  {
+    "url": "webcal://blog.archive.org/?post_type=tribe_events&ical=1&eventDisplay=list",
+    "error": "InvalidSchema(\"No connection adapters were found for 'webcal://blog.archive.org/?post_type=tribe_events&ical=1&eventDisplay=list'\")"
+  }
+]
