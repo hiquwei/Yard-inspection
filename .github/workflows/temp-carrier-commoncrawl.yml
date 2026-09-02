@@ -1,0 +1,136 @@
+name: Temporary Carrier Common Crawl Search
+
+on:
+  push:
+    branches:
+      - temp/carrier-commoncrawl-20260902
+
+permissions:
+  contents: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Search Common Crawl indexes and retrieve matching records
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p output/records
+          cat > output/search_cc.py <<'PY'
+          import urllib.request, urllib.parse, json, re, gzip, io, os, hashlib, time, ssl
+          UA='Mozilla/5.0'
+          ctx=ssl.create_default_context()
+          def get(url,t=60,headers=None):
+              h={'User-Agent':UA}; h.update(headers or {})
+              req=urllib.request.Request(url,headers=h)
+              with urllib.request.urlopen(req,timeout=t,context=ctx) as r:
+                  return r.read(),dict(r.headers),getattr(r,'status',200)
+
+          coll,_h,_s=get('https://index.commoncrawl.org/collinfo.json')
+          indexes=[x['id'] for x in json.loads(coll)]
+          # prioritize all historical years, newest to oldest
+          patterns=[]
+          hosts=['container.carrier.com','www.container.carrier.com','carrier.refrigeration.com','www.carrier.refrigeration.com','transcentral.carrier.com','www.transcentral.carrier.com']
+          suffixes=['*t300*','*t-300*','*matrix*','*unitlookup*','*UnitLookup*','*productlookup*','*pid*']
+          for h in hosts:
+              for s in suffixes: patterns.append(h+'/'+s)
+
+          matches=[]; errors=[]
+          for idx in indexes:
+              # older site likely 1999-2015; still query all indexes
+              for pat in patterns:
+                  q='https://index.commoncrawl.org/'+idx+'-index?'+urllib.parse.urlencode({'url':pat,'output':'json','filter':'status:200','collapse':'urlkey'})
+                  try:
+                      b,_,_=get(q,35)
+                      for line in b.decode('utf-8','replace').splitlines():
+                          try:
+                              row=json.loads(line)
+                          except Exception: continue
+                          u=row.get('url','')
+                          if re.search(r'(?i)t.?300|matrix|unitlookup|productlookup|(?:^|[/_.-])pid(?:[/_.?-]|$)',u):
+                              row['_index']=idx; matches.append(row)
+                  except Exception as e:
+                      errors.append({'index':idx,'pattern':pat,'error':repr(e)})
+                  time.sleep(.02)
+
+          # dedupe by digest/url/timestamp
+          uniq=[]; seen=set()
+          for r in matches:
+              k=(r.get('url'),r.get('timestamp'),r.get('digest'))
+              if k not in seen: seen.add(k); uniq.append(r)
+          matches=uniq
+          open('output/index_matches.json','w').write(json.dumps(matches,indent=2,ensure_ascii=False))
+          open('output/index_errors.json','w').write(json.dumps(errors,indent=2,ensure_ascii=False))
+          with open('output/matching_urls.txt','w') as f:
+              for r in matches: f.write(f"{r.get('_index')}\t{r.get('timestamp')}\t{r.get('status')}\t{r.get('mime')}\t{r.get('url')}\t{r.get('filename')}\t{r.get('offset')}\t{r.get('length')}\n")
+
+          # Retrieve up to 500 unique promising WARC payloads; exact URL/title assets first.
+          def score(r):
+              u=r.get('url','').lower(); m=r.get('mime','').lower()
+              s=0
+              for term,w in [('t300',100),('t-300',100),('productmatrix',90),('product_matrix',90),('unitmatrix',85),('unitlookup',80),('matrix',50),('pid',15)]:
+                  if term in u:s+=w
+              if any(x in m for x in ['html','json','javascript','xml','pdf','zip','octet']):s+=20
+              if re.search(r'\.(html?|js|json|xml|csv|txt|pdf|zip|asp|aspx|php)(?:\?|$)',u):s+=15
+              return -s
+          selected=sorted(matches,key=score)[:500]
+          metadata=[]
+          for i,r in enumerate(selected):
+              try:
+                  filename=r['filename']; offset=int(r['offset']); length=int(r['length'])
+                  warc_url='https://data.commoncrawl.org/'+filename
+                  raw,headers,status=get(warc_url,60,{'Range':f'bytes={offset}-{offset+length-1}'})
+                  try: data=gzip.decompress(raw)
+                  except Exception: data=raw
+                  # WARC response contains headers, then HTTP response, then payload
+                  parts=data.split(b'\r\n\r\n',2)
+                  payload=parts[2] if len(parts)>=3 else data
+                  # Handle chunked transfer roughly and leave compressed HTTP payload as-is when unknown.
+                  sha=hashlib.sha256(payload).hexdigest()[:20]
+                  u=r.get('url',''); ext='.bin'
+                  ctype=r.get('mime','')
+                  if payload.startswith(b'%PDF'): ext='.pdf'
+                  elif payload.startswith(b'PK'): ext='.zip'
+                  elif 'html' in ctype: ext='.html'
+                  elif 'javascript' in ctype: ext='.js'
+                  elif 'json' in ctype: ext='.json'
+                  elif 'xml' in ctype: ext='.xml'
+                  elif 'text' in ctype: ext='.txt'
+                  path=f'output/records/{i:04d}_{sha}{ext}'
+                  open(path,'wb').write(payload)
+                  meta=dict(r);meta['_saved']=path;meta['_payload_size']=len(payload);metadata.append(meta)
+              except Exception as e:
+                  metadata.append({'url':r.get('url'),'error':repr(e)})
+          open('output/retrieved_records.json','w').write(json.dumps(metadata,indent=2,ensure_ascii=False))
+
+          # Search retrieved textual payloads for useful labels and PID/model pairs.
+          hits=[]
+          pair_re=re.compile(r'(?i)(NT[ -]?\d{3,5}).{0,300}?(69NT(?:20|40)-\d{3}-\d{3})|(69NT(?:20|40)-\d{3}-\d{3}).{0,300}?(NT[ -]?\d{3,5})',re.S)
+          for meta in metadata:
+              p=meta.get('_saved')
+              if not p or not os.path.exists(p): continue
+              b=open(p,'rb').read()
+              text=b.decode('utf-8','replace')
+              terms=[]
+              for m in pair_re.finditer(text): terms.append(m.group(0)[:500])
+              if terms or re.search(r'(?i)container.{0,60}(product|unit|identification).{0,60}matrix|parts identification number|T.?300',text):
+                  hits.append({'url':meta.get('url'),'saved':p,'samples':terms[:100],'text_head':text[:3000]})
+          open('output/content_hits.json','w').write(json.dumps(hits,indent=2,ensure_ascii=False))
+          print('indexes',len(indexes),'patterns',len(patterns),'matches',len(matches),'retrieved',len(metadata),'hits',len(hits),'errors',len(errors))
+          print(open('output/matching_urls.txt').read()[:50000])
+          PY
+          python output/search_cc.py | tee output/console.txt
+
+      - name: Upload Common Crawl results
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-commoncrawl-results
+          path: output/
+          retention-days: 1
+          compression-level: 6
+
+      - name: Remove temporary branch
+        if: always()
+        shell: bash
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
