@@ -1,0 +1,70 @@
+name: Temporary Carrier UnitLookup Source Inspection
+
+on:
+  push:
+    branches:
+      - temp/carrier-unitlookup-code-20260902
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone public metadata repository and inspect UnitLookup implementation
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p output
+          git clone --depth 1 https://github.com/Sharex508/Agentnattqa.git source
+          ROOT=source/data/repos/local/natt-qa/force-app/main/default
+
+          find "$ROOT" -type f | grep -Ei 'unit.?lookup|pid|matrix|model|container' | sort > output/relevant_paths.txt || true
+
+          rg -n -i --hidden \
+            'UnitLookup|CONTAINER_PID__c|Model_Number__c|Parts Identification|Product Matrix|Unit Matrix|PID Number|PID #|PID__c|NT[ -]?[0-9]{3,5}|69NT40' \
+            "$ROOT" > output/relevant_hits.txt || true
+
+          rg -l -i --hidden \
+            'UnitLookup|CONTAINER_PID__c|Model_Number__c|Parts Identification|Product Matrix|Unit Matrix|PID Number|PID #|PID__c|NT[ -]?[0-9]{3,5}|69NT40' \
+            "$ROOT" | sort > output/relevant_files.txt || true
+
+          mkdir -p output/files
+          while IFS= read -r f; do
+            rel="${f#$ROOT/}"
+            mkdir -p "output/files/$(dirname "$rel")"
+            cp "$f" "output/files/$rel"
+          done < output/relevant_files.txt
+
+          # Inventory of likely executable/source locations and Experience Bundle files.
+          for d in classes lwc aura pages components flows objects experiences sites networks staticresources profiles permissionsets; do
+            if [ -d "$ROOT/$d" ]; then
+              find "$ROOT/$d" -maxdepth 4 -type f | sort > "output/${d}_inventory.txt"
+            fi
+          done
+
+          # Copy full Experience/site metadata and UnitLookup named files even if search missed them.
+          for d in experiences sites networks siteDotComSites navigationMenus networkBranding; do
+            if [ -d "$ROOT/$d" ]; then
+              mkdir -p "output/full_$d"
+              cp -a "$ROOT/$d/." "output/full_$d/"
+            fi
+          done
+
+          du -sh source output
+          wc -l output/*.txt || true
+          head -n 500 output/relevant_hits.txt || true
+
+      - name: Upload inspection results
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-unitlookup-source-inspection
+          path: output/
+          retention-days: 1
+          compression-level: 6
+
+      - name: Remove temporary branch
+        if: always()
+        shell: bash
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
