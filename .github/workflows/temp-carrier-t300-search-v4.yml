@@ -1,0 +1,165 @@
+name: Temporary Carrier T300 Search V4
+on:
+  push:
+    branches: [temp/carrier-t300-search-v4-20260902]
+permissions:
+  contents: write
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: temp/carrier-t300-search-v4-20260902
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils p7zip-full >/dev/null
+          python -m pip install --quiet requests beautifulsoup4 lxml pymupdf pandas openpyxl
+      - name: Deep search and parse
+        run: |
+          cat > /tmp/search.py <<'PY'
+          import requests,re,os,io,json,hashlib,urllib.parse,subprocess,zipfile,tarfile,time
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+          import fitz,pandas as pd
+          from collections import defaultdict
+          O=Path('carrier_t300_search_v4'); O.mkdir(exist_ok=True); D=O/'downloads'; D.mkdir(exist_ok=True)
+          s=requests.Session(); s.headers['User-Agent']='Mozilla/5.0 Chrome/131 Safari/537.36'
+          queries=[
+            '"Carrier" "T-300 Rev B"', '"Carrier T-300" pdf', '"T-300" "Container Product Matrix" pdf',
+            '"Product Matrix" "69NT40-541"', '"Product Matrix" "69NT40-561"',
+            '"NT2300" "69NT40"', '"NT2301" "69NT40"', '"NT2400" "69NT40"',
+            '"NT2500" "69NT40"', '"NT2600" "69NT40"', '"NT2700" "69NT40"',
+            '"NT2800" "69NT40"', '"NT2900" "69NT40"', '"NT2999" "69NT40"',
+            'site:scribd.com "Carrier" "T-300"', 'site:pdfcoffee.com "Carrier" "T-300"',
+            'site:manualzz.com Carrier "Product Matrix"', 'site:manualslib.com Carrier T-300',
+            'site:archive.org Carrier "Product Matrix"', 'site:docplayer.net Carrier "NT2300"',
+            'site:vdocuments.mx Carrier "T-300"', 'site:idoc.pub Carrier "T-300"',
+            'site:transcentral.carrier.com "NT2300"', 'site:shareddocs.com "NT2300"'
+          ]
+          urls={}; snippets=[]; errs=[]
+          def add(u,why):
+            if not u:return
+            u=u.strip()
+            if u.startswith('//'):u='https:'+u
+            if u.startswith('http'):urls.setdefault(u,[]).append(why)
+          for q in queries:
+            for eng,url in [
+              ('bing','https://www.bing.com/search?q='+urllib.parse.quote(q)+'&count=50'),
+              ('ddg','https://html.duckduckgo.com/html/?q='+urllib.parse.quote(q)),
+              ('yandex','https://yandex.com/search/?text='+urllib.parse.quote(q))]:
+              try:r=s.get(url,timeout=45)
+              except Exception as e:errs.append([url,repr(e)]);continue
+              (O/f'{eng}_{hashlib.sha1(q.encode()).hexdigest()[:10]}.html').write_bytes(r.content)
+              soup=BeautifulSoup(r.text,'lxml')
+              text=' '.join(soup.stripped_strings)
+              for m in re.finditer(r'NT2[3-9]\d\d',text,re.I): snippets.append({'q':q,'engine':eng,'source':url,'text':text[max(0,m.start()-300):m.end()+700]})
+              for a in soup.select('a[href]'):
+                h=a.get('href','')
+                if 'uddg=' in h:
+                  try:h=urllib.parse.parse_qs(urllib.parse.urlparse(h).query)['uddg'][0]
+                  except:pass
+                if eng=='bing' and h.startswith('/ck/a'):
+                  continue
+                if any(k in h.lower() for k in ['carrier','transcentral','shareddocs','scribd','pdf','manual','docplayer','archive.org','vdocuments','idoc']):add(h,eng+':'+q)
+          # GitHub code search via unauthenticated public API and HTML search.
+          ghqs=['"T-300" "Product Matrix" Carrier','"NT2300" "69NT40"','"NT2808" "69NT40"','"NT2999" "69NT40"']
+          for q in ghqs:
+            u='https://github.com/search?q='+urllib.parse.quote(q)+'&type=code'
+            try:r=s.get(u,timeout=45); (O/f'github_{hashlib.sha1(q.encode()).hexdigest()[:8]}.html').write_bytes(r.content)
+            except:continue
+            for m in re.finditer(r'href="([^"]+)"',r.text):
+              h=urllib.parse.urljoin('https://github.com',m.group(1))
+              if '/blob/' in h or '/raw/' in h:add(h,'github:'+q)
+          # CDX broad filters; also inspect wildcard indexes for filenames containing T300/matrix.
+          cdx=[
+            'https://web.archive.org/cdx/search/cdx?url=transcentral.carrier.com/*&output=json&fl=timestamp,original,statuscode,mimetype&filter=statuscode:200&filter=original:.*(?i)(t-?300|product.?matrix).*&collapse=urlkey&limit=20000',
+            'https://web.archive.org/cdx/search/cdx?url=www.transcentral.carrier.com/*&output=json&fl=timestamp,original,statuscode,mimetype&filter=statuscode:200&filter=original:.*(?i)(t-?300|product.?matrix).*&collapse=urlkey&limit=20000',
+            'https://web.archive.org/cdx/search/cdx?url=shareddocs.com/hvac/docs/2000/Public/*&output=json&fl=timestamp,original,statuscode,mimetype&filter=statuscode:200&filter=original:.*(?i)t-?300.*&collapse=urlkey&limit=20000'
+          ]
+          for u in cdx:
+            try:r=s.get(u,timeout=120);data=r.json()
+            except Exception as e:errs.append([u,repr(e)]);continue
+            if isinstance(data,list) and data:
+              head=data[0]
+              for row in data[1:]:
+                d=dict(zip(head,row));o=d.get('original');t=d.get('timestamp')
+                add(o,'cdx-original')
+                if o and t:add('https://web.archive.org/web/'+t+'id_/'+o,'cdx-snapshot')
+          # Direct URL dictionary, including common RoboHelp/parts-publication layouts.
+          bases=['https://www.transcentral.carrier.com/CPGTechPubs/ops_service/','https://transcentral.carrier.com/CPGTechPubs/ops_service/']
+          paths=[
+            't300/t300.htm','t300/index.htm','t300/BookCover/BookCover.htm','t300/t300.pdf','t300/T-300.pdf',
+            't-300/t-300.htm','t-300/index.htm','t-300/BookCover/BookCover.htm','t-300/T-300.pdf',
+            't300_product_matrix/index.htm','t300_product_matrix/BookCover/BookCover.htm',
+            't300_productmatrix/index.htm','t300_productmatrix/BookCover/BookCover.htm',
+            'product_matrix/index.htm','productmatrix/index.htm','productmatrix/ProductMatrix.htm',
+            'T-300.pdf','T300.pdf','T-300.zip','T300.zip','ProductMatrix.zip','ContainerProductMatrix.zip'
+          ]
+          for b in bases:
+            for p in paths:add(b+p,'dictionary')
+          # Actual hyperlink from the Carrier 2011 article.
+          article='https://www.transcentral.carrier.com/CPGTechPubs/ops_service/techline/Techline/2011-December/2011-December.htm'
+          try:
+            r=s.get(article,timeout=45);soup=BeautifulSoup(r.content,'lxml')
+            for a in soup.select('a[href]'):
+              h=urllib.parse.urljoin(r.url,a['href']);txt=' '.join(a.stripped_strings)
+              if any(k in (txt+' '+h).lower() for k in ['matrix','t-300','t300']):add(h,'carrier-article-link:'+txt)
+          except Exception as e:errs.append([article,repr(e)])
+          fetched=[]; texts=[]
+          for idx,(u,why) in enumerate(list(urls.items())):
+            if idx>1500:break
+            try:r=s.get(u,timeout=55,allow_redirects=True)
+            except Exception as e:errs.append([u,repr(e)]);continue
+            rec={'url':u,'final':r.url,'status':r.status_code,'ct':r.headers.get('content-type',''),'size':len(r.content),'why':why};fetched.append(rec)
+            if r.status_code!=200 or not r.content or len(r.content)>120_000_000:continue
+            name=hashlib.sha1(u.encode()).hexdigest()[:12]+'_'+re.sub('[^A-Za-z0-9._-]','_',Path(urllib.parse.urlparse(r.url).path).name or 'index')[:100]
+            p=D/name;p.write_bytes(r.content);rec['file']=str(p)
+            data=r.content;ct=rec['ct'].lower();txt=None
+            try:
+              if data.startswith(b'%PDF') or 'pdf' in ct:
+                doc=fitz.open(stream=data,filetype='pdf');txt='\n'.join(pg.get_text() for pg in doc)
+              elif b'<html' in data[:3000].lower() or 'html' in ct:txt=BeautifulSoup(data,'lxml').get_text('\n')
+              elif len(data)<20_000_000:
+                for enc in ['utf-8','utf-16','latin1']:
+                  try:txt=data.decode(enc);break
+                  except:pass
+            except Exception as e:errs.append([u,'extract '+repr(e)])
+            if txt:texts.append((u,txt));(D/(name+'.txt')).write_text(txt,encoding='utf-8',errors='ignore')
+          pidre=re.compile(r'\bNT(2[3-9]\d\d)\b',re.I)
+          modre=re.compile(r'\b69NT\d{2}-\d{3}-\d{3}\b',re.I)
+          pairs=defaultdict(set);evid=[]
+          def examine(src,txt,method):
+            for line in txt.splitlines():
+              ps=['NT'+x for x in pidre.findall(line)];ms=modre.findall(line)
+              if ps and ms:
+                for p in ps:pairs[p].update(x.upper() for x in ms);evid.append({'pid':p,'models':ms,'source':src,'method':method,'context':line[:3000]})
+            for m in pidre.finditer(txt):
+              w=txt[max(0,m.start()-300):m.end()+500];ps=set(pidre.findall(w));ms=modre.findall(w)
+              if len(ps)==1 and ms:
+                p='NT'+m.group(1);pairs[p].update(x.upper() for x in ms);evid.append({'pid':p,'models':ms,'source':src,'method':method+'-proximity','context':w[:3000]})
+          for src,txt in texts:examine(src,txt,'document')
+          for x in snippets:examine(x['source'],x['text'],'search-snippet')
+          rows=[(f'NT{n}','; '.join(sorted(pairs.get(f"NT{n}",set())))) for n in range(2300,3000)]
+          pd.DataFrame(rows,columns=['部件编号','对应的机型范围']).to_csv(O/'pairs.csv',index=False,encoding='utf-8-sig')
+          coverage=sum(bool(x[1]) for x in rows)
+          (O/'coverage.json').write_text(json.dumps({'covered':coverage,'total':700,'candidates':len(urls),'fetched':len(fetched)},indent=2),encoding='utf-8')
+          (O/'evidence.json').write_text(json.dumps(evid,ensure_ascii=False,indent=2),encoding='utf-8')
+          (O/'urls.json').write_text(json.dumps(urls,ensure_ascii=False,indent=2),encoding='utf-8')
+          (O/'fetched.json').write_text(json.dumps(fetched,ensure_ascii=False,indent=2),encoding='utf-8')
+          (O/'errors.json').write_text(json.dumps(errs,ensure_ascii=False,indent=2),encoding='utf-8')
+          print('COVERAGE',coverage,'URLS',len(urls),'FETCHED',len(fetched))
+          PY
+          python /tmp/search.py
+      - name: Commit results
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add carrier_t300_search_v4
+          git commit -m "Add Carrier T-300 deep search results [skip ci]" || true
+          git push origin HEAD:temp/carrier-t300-search-v4-20260902
+      - uses: actions/upload-artifact@v4
+        with:
+          name: carrier-t300-search-v4
+          path: carrier_t300_search_v4
+          retention-days: 1
